@@ -1,0 +1,2136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ribon7 — Trading Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  /* Full names (use in components) */
+  --color-bg:#080810;--color-surface-1:#0E0E1A;--color-surface-2:#141428;--color-surface-3:#1A1A35;
+  --color-border:#1E1E3F;--color-border-hi:#2D2D5E;
+  --color-accent:#818CF8;--color-accent-dim:#4F46E5;
+  --color-profit:#34D399;--color-loss:#F87171;--color-warn:#FBBF24;--color-live:#22D3EE;
+  --color-text-pri:#F1F5F9;--color-text-sec:#94A3B8;--color-text-muted:#475569;
+  /* Short aliases (same values, used internally) */
+  --bg:var(--color-bg);--s1:var(--color-surface-1);--s2:var(--color-surface-2);--s3:var(--color-surface-3);
+  --bd:var(--color-border);--bdh:var(--color-border-hi);
+  --acc:var(--color-accent);--acd:var(--color-accent-dim);
+  --grn:var(--color-profit);--red:var(--color-loss);--amb:var(--color-warn);--cyn:var(--color-live);
+  --tp:var(--color-text-pri);--ts:var(--color-text-sec);--tm:var(--color-text-muted);
+  --sans:'DM Sans',sans-serif;--mono:'Geist Mono',monospace;
+  --r-sm:6px;--r-md:8px;--r-lg:12px;
+}
+html,body{height:100%;background:var(--bg);color:var(--ts);font-family:var(--sans);font-size:14px;overflow:hidden;}
+.mono{font-family:var(--mono);}
+.text-pri{color:var(--tp);}
+.text-sec{color:var(--ts);}
+.text-mut{color:var(--tm);}
+.text-acc{color:var(--acc);}
+.text-grn{color:var(--grn);}
+.text-red{color:var(--red);}
+.text-amb{color:var(--amb);}
+.text-cyn{color:var(--cyn);}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
+::-webkit-scrollbar-thumb:hover{background:var(--bdh);}
+
+/* ── APP SHELL ── */
+#app{display:flex;height:100vh;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:60px;background:var(--s1);border-right:1px solid var(--bd);
+  display:flex;flex-direction:column;align-items:center;
+  padding:12px 0;gap:2px;flex-shrink:0;
+  transition:width .2s ease;position:relative;z-index:100;overflow:hidden;
+}
+#sidebar:hover{width:220px;}
+#sidebar:hover .nav-label{opacity:1;}
+#sidebar:hover .sidebar-bottom{align-items:flex-start;padding:0 12px;}
+#sidebar:hover .logo-wrap{width:100%;padding:0 12px;justify-content:flex-start;}
+#sidebar:hover .nav-item{width:100%;justify-content:flex-start;padding:0 12px;border-radius:6px;margin-left:0;border-left:none;}
+#sidebar:hover .nav-item.active{border-left:2px solid var(--acc);border-radius:0 6px 6px 0;margin-left:-1px;padding-left:11px;}
+.logo-wrap{display:flex;align-items:center;justify-content:center;margin-bottom:12px;width:60px;transition:all .2s;}
+.logo{width:32px;height:32px;background:var(--acd);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.logo-text{font-size:16px;font-weight:700;color:var(--acc);margin-left:10px;opacity:0;transition:opacity .15s .05s;white-space:nowrap;}
+#sidebar:hover .logo-text{opacity:1;}
+.nav-item{
+  width:44px;height:36px;border-radius:var(--r-sm);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .12s;color:var(--tm);
+  white-space:nowrap;gap:10px;flex-shrink:0;
+}
+.nav-item:hover{background:var(--s2);color:var(--ts);}
+.nav-item.active{background:var(--s2);color:var(--acc);border-left:2px solid var(--acc);border-radius:0 6px 6px 0;margin-left:-1px;padding-left:calc(50% - 8px - 1px);justify-content:flex-start;}
+#sidebar:hover .nav-item.active{padding-left:11px;}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;}
+.nav-label{opacity:0;transition:opacity .15s;font-size:13px;font-weight:500;}
+.nav-spacer{flex:1;}
+.sidebar-bottom{display:flex;flex-direction:column;align-items:center;gap:8px;padding-bottom:8px;width:100%;transition:all .2s;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--cyn);box-shadow:0 0 6px rgba(34,211,238,.5);animation:pulse 2s infinite;}
+.live-row{display:flex;align-items:center;gap:8px;}
+.live-label{opacity:0;font-size:11px;color:var(--cyn);font-family:var(--mono);transition:opacity .15s;white-space:nowrap;}
+#sidebar:hover .live-label{opacity:1;}
+.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--acd),var(--acc));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
+.avatar-name{opacity:0;font-size:12px;font-weight:500;color:var(--ts);transition:opacity .15s;white-space:nowrap;}
+#sidebar:hover .avatar-name{opacity:1;}
+.avatar-row{display:flex;align-items:center;gap:8px;cursor:pointer;width:100%;padding:0 12px;}
+
+/* ── MAIN ── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── TOPBAR ── */
+#topbar{
+  height:48px;background:var(--s1);border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;
+}
+.topbar-title{font-size:15px;font-weight:600;color:var(--tp);flex:1;}
+.topbar-actions{display:flex;align-items:center;gap:8px;}
+.kbd-btn{display:flex;align-items:center;gap:5px;padding:4px 10px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm);font-size:11px;color:var(--tm);font-family:var(--mono);cursor:pointer;transition:all .12s;}
+.kbd-btn:hover{border-color:var(--bdh);color:var(--ts);}
+.acct-pill{display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm);cursor:pointer;transition:all .12s;font-size:12px;color:var(--ts);}
+.acct-pill:hover{border-color:var(--bdh);}
+.acct-dot{width:6px;height:6px;border-radius:50%;background:var(--grn);box-shadow:0 0 5px rgba(52,211,153,.5);}
+.icon-btn{width:30px;height:30px;border-radius:var(--r-sm);background:transparent;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;color:var(--ts);}
+.icon-btn:hover{background:var(--s2);border-color:var(--bdh);}
+.icon-btn svg{width:14px;height:14px;}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;position:relative;}
+.page{display:none;height:100%;overflow-y:auto;}
+.page.active{display:block;}
+.page-pad{padding:24px;}
+
+/* ── FLOATING P&L TICKER ── */
+#floating-pl{
+  position:fixed;bottom:20px;right:20px;
+  background:var(--s2);border:1px solid var(--bdh);border-radius:var(--r-md);
+  padding:6px 14px;display:flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:12px;z-index:50;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);
+}
+.fl-label{font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.08em;}
+.fl-val{font-weight:700;font-size:14px;}
+.fl-val.pos{color:var(--grn);text-shadow:0 0 8px rgba(52,211,153,.3);}
+.fl-val.neg{color:var(--red);text-shadow:0 0 8px rgba(248,113,113,.3);}
+
+/* ── CARDS ── */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r-md);transition:border-color .12s,box-shadow .12s;}
+.card:hover{border-color:var(--bdh);box-shadow:0 4px 16px rgba(0,0,0,.4);}
+.card-header{padding:14px 16px 0;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);}
+.card-body{padding:16px;}
+.card-body-sm{padding:12px 16px;}
+
+/* ── STAT STRIP ── */
+.stat-strip{background:var(--s1);border-bottom:1px solid var(--bd);display:grid;padding:10px 0;flex-shrink:0;}
+.stat-item{display:flex;flex-direction:column;align-items:center;padding:2px 16px;border-right:1px solid var(--bd);}
+.stat-item:last-child{border-right:none;}
+.stat-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);margin-bottom:3px;white-space:nowrap;}
+.stat-val{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--tp);white-space:nowrap;}
+.stat-val.pos{color:var(--grn);text-shadow:0 0 8px rgba(52,211,153,.25);}
+.stat-val.neg{color:var(--red);text-shadow:0 0 8px rgba(248,113,113,.25);}
+.stat-val.warn{color:var(--amb);}
+
+/* ── CHIPS/BADGES ── */
+.chip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--mono);white-space:nowrap;}
+.chip-buy{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);color:var(--grn);}
+.chip-sell{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);color:var(--red);}
+.chip-warn{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2);color:var(--amb);}
+.chip-live{background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.2);color:var(--cyn);}
+.chip-acc{background:rgba(129,140,248,.1);border:1px solid rgba(129,140,248,.2);color:var(--acc);}
+.chip-neu{background:var(--s2);border:1px solid var(--bd);color:var(--ts);}
+.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 2s infinite;}
+
+/* ── BUTTONS ── */
+.btn{height:32px;padding:0 14px;border-radius:var(--r-sm);font-size:12px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:none;transition:all .1s;font-family:var(--sans);white-space:nowrap;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--acd);color:#fff;}
+.btn-primary:hover{background:var(--acc);}
+.btn-secondary{background:transparent;border:1px solid var(--bd);color:var(--ts);}
+.btn-secondary:hover{background:var(--s2);border-color:var(--bdh);}
+.btn-danger{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:var(--red);}
+.btn-danger:hover{background:rgba(248,113,113,.15);}
+.btn-ghost{background:transparent;border:none;color:var(--tm);}
+.btn-ghost:hover{color:var(--ts);}
+.btn-sm{height:26px;padding:0 10px;font-size:11px;}
+.btn-buy{background:var(--grn);color:#051a10;font-weight:700;flex:1;}
+.btn-buy:hover{background:#4ade80;}
+.btn-sell{background:var(--red);color:#1a0505;font-weight:700;flex:1;}
+.btn-sell:hover{background:#f97316;}
+.btn-icon{width:28px;height:28px;padding:0;border-radius:var(--r-sm);background:transparent;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .1s;color:var(--ts);}
+.btn-icon:hover{background:var(--s2);border-color:var(--bdh);}
+.btn-icon.danger:hover{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--red);}
+.btn-icon svg{width:12px;height:12px;}
+
+/* ── INPUTS ── */
+.field-group{display:flex;flex-direction:column;gap:5px;}
+.field-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--tm);}
+.input{height:34px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--r-sm);color:var(--tp);font-family:var(--sans);font-size:13px;padding:0 10px;outline:none;transition:border-color .15s,box-shadow .15s;width:100%;}
+.input:focus{border-color:var(--acc);box-shadow:0 0 0 2px rgba(129,140,248,.15);}
+.input::placeholder{color:var(--tm);}
+.input.mono{font-family:var(--mono);}
+select.input{appearance:none;cursor:pointer;}
+
+/* ── TABLES ── */
+.tbl-wrap{border:1px solid var(--bd);border-radius:var(--r-md);overflow:hidden;}
+.tbl-wrap.scrollable{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;}
+.tbl-wrap.scrollable .tbl{min-width:640px;}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{background:var(--s2);color:var(--tm);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:8px 12px;text-align:left;border-bottom:1px solid var(--bd);white-space:nowrap;}
+.tbl td{padding:8px 12px;border-bottom:1px solid rgba(30,30,63,.5);color:var(--ts);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tbody tr:nth-child(odd) td{background:rgba(8,8,16,.4);}
+.tbl tbody tr:nth-child(even) td{background:rgba(14,14,26,.4);}
+.tbl tbody tr:hover td{background:var(--s2)!important;cursor:pointer;}
+.tbl .mono{font-family:var(--mono);font-size:11px;}
+.tbl .right{text-align:right;}
+.tbl .pos{color:var(--grn);font-family:var(--mono);}
+.tbl .neg{color:var(--red);font-family:var(--mono);}
+.act-cell{display:flex;gap:4px;justify-content:flex-end;}
+
+/* ── SECTION HEADER ── */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.sec-hdr-left{display:flex;align-items:center;gap:8px;}
+.sec-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--tp);}
+.count-badge{background:var(--s2);border:1px solid var(--bd);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--ts);padding:1px 6px;}
+
+/* ── ANIMATIONS ── */
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}
+@keyframes flash-grn{0%,100%{background:transparent}50%{background:rgba(52,211,153,.12)}}
+@keyframes flash-red{0%,100%{background:transparent}50%{background:rgba(248,113,113,.12)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.fade-in{animation:fadeIn .2s ease forwards;}
+
+/* ── TOGGLE ── */
+.toggle{width:36px;height:20px;background:var(--bd);border-radius:10px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--acd);}
+.toggle::after{content:'';width:14px;height:14px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:transform .2s;}
+.toggle.on::after{transform:translateX(16px);}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--bd);margin:20px 0;}
+
+/* ── GRID LAYOUTS ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeIn .18s ease;}
+.modal{background:var(--s3);border:1px solid var(--bdh);border-radius:var(--r-lg);padding:24px;width:440px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:fadeIn .18s ease;}
+.modal-title{font-size:15px;font-weight:600;color:var(--tp);margin-bottom:20px;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:16px;right:16px;background:var(--s3);border:1px solid var(--bdh);border-radius:var(--r-md);padding:12px 16px;width:300px;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:300;animation:slideRight .22s ease;display:flex;align-items:center;gap:10px;}
+.toast-bar{position:absolute;bottom:0;left:0;height:2px;background:var(--grn);border-radius:0 0 var(--r-md) var(--r-md);animation:shrink 3s linear forwards;}
+@keyframes shrink{from{width:100%}to{width:0}}
+.toast-icon{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.toast-icon.success{background:var(--grn);}
+.toast-icon.warn{background:var(--amb);}
+.toast-icon.err{background:var(--red);}
+
+/* ── AUTH PAGES ── */
+#page-login,#page-register,#page-onboarding{
+  display:none;position:fixed;inset:0;background:var(--bg);
+  background-image:radial-gradient(ellipse at 50% 50%,rgba(129,140,248,.04) 0%,transparent 70%);
+  align-items:center;justify-content:center;z-index:500;
+}
+#page-login.active,#page-register.active,#page-onboarding.active{display:flex;}
+.auth-card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r-lg);padding:40px;width:420px;max-width:95vw;}
+.auth-logo{text-align:center;margin-bottom:6px;font-size:28px;font-weight:700;color:var(--acc);font-family:var(--sans);}
+.auth-sub{text-align:center;font-size:13px;color:var(--tm);margin-bottom:28px;}
+.auth-form{display:flex;flex-direction:column;gap:16px;}
+.auth-footer{text-align:center;margin-top:16px;font-size:12px;color:var(--tm);}
+.auth-footer span{color:var(--acc);cursor:pointer;}
+.auth-footer span:hover{text-decoration:underline;}
+.btn-full{width:100%;height:40px;font-size:13px;}
+.otp-wrap{display:flex;gap:8px;justify-content:center;margin:20px 0;}
+.otp-input{width:44px;height:52px;text-align:center;font-size:20px;font-family:var(--mono);background:var(--bg);border:1px solid var(--bd);border-radius:var(--r-sm);color:var(--tp);outline:none;}
+.otp-input:focus{border-color:var(--acc);}
+
+/* ── ONBOARDING ── */
+.ob-card{width:480px;max-width:95vw;}
+.ob-dots{display:flex;gap:6px;justify-content:center;margin-bottom:24px;}
+.ob-dot{width:8px;height:8px;border-radius:50%;background:var(--bd);transition:background .2s;}
+.ob-dot.active{background:var(--acc);}
+.ob-dot.done{background:rgba(129,140,248,.4);}
+.ob-title{font-size:16px;font-weight:600;color:var(--tp);margin-bottom:6px;}
+.ob-sub{font-size:13px;color:var(--tm);margin-bottom:24px;}
+.broker-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.broker-card{background:var(--s2);border:2px solid var(--bd);border-radius:var(--r-md);padding:20px;cursor:pointer;transition:all .15s;text-align:center;}
+.broker-card:hover{border-color:var(--acc);}
+.broker-card.selected{border-color:var(--acc);background:rgba(129,140,248,.06);}
+.broker-card.unavail{opacity:.4;cursor:not-allowed;}
+.broker-name{font-size:14px;font-weight:600;color:var(--tp);margin-bottom:6px;}
+.broker-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--grn);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);border-radius:4px;padding:2px 6px;}
+.terminal-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+.terminal-item{display:flex;align-items:center;gap:10px;padding:12px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm);cursor:pointer;}
+.terminal-item.selected{border-color:var(--acc);}
+.terminal-radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--bd);flex-shrink:0;transition:border-color .12s;position:relative;}
+.terminal-item.selected .terminal-radio{border-color:var(--acc);}
+.terminal-item.selected .terminal-radio::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--acc);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
+.ob-connect{text-align:center;padding:20px 0;}
+.ob-connect .spinner{width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--acc);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ob-success{color:var(--grn);font-size:24px;margin-bottom:12px;}
+
+/* ── HOME / WATCHLIST ── */
+.symbol-list{display:flex;flex-direction:column;}
+.symbol-row{border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s;}
+.symbol-row:hover{background:var(--s1);}
+.symbol-row:last-child{border-bottom:none;}
+.symbol-main{display:flex;align-items:center;padding:0 20px;height:64px;}
+.sym-info{flex:1;}
+.sym-name{font-size:14px;font-weight:600;color:var(--tp);}
+.sym-desc{font-size:11px;color:var(--tm);margin-top:1px;}
+.sym-price{text-align:right;}
+.sym-bid{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--tp);}
+.sym-bid.flash{animation:flash-grn .3s ease;}
+.sym-actions{display:flex;gap:8px;padding:8px 20px 12px;background:rgba(14,14,26,.5);animation:fadeIn .12s ease;}
+
+/* ── HUB ── */
+.hub-wrap{display:flex;flex-direction:column;height:100%;}
+.hub-content{flex:1;overflow-y:auto;padding:20px;}
+
+/* ── CHART PAGE ── */
+.chart-wrap{display:flex;flex-direction:column;height:100%;}
+.chart-header{padding:10px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex-shrink:0;}
+.chart-sym{font-size:15px;font-weight:700;color:var(--tp);font-family:var(--mono);}
+.chart-price{font-family:var(--mono);font-size:13px;color:var(--ts);}
+.tf-row{padding:0 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:4px;flex-shrink:0;height:38px;}
+.tf-tab{padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;font-family:var(--mono);cursor:pointer;color:var(--tm);transition:all .1s;border:1px solid transparent;}
+.tf-tab:hover{color:var(--ts);background:var(--s2);}
+.tf-tab.active{color:var(--acc);border-color:var(--acc);background:rgba(129,140,248,.08);}
+.ind-sep{width:1px;height:18px;background:var(--bd);margin:0 4px;}
+.ind-btn{padding:3px 8px;border-radius:4px;font-size:11px;cursor:pointer;color:var(--tm);transition:all .1s;border:1px solid transparent;}
+.ind-btn:hover{color:var(--ts);}
+.ind-btn.active{color:var(--acc);border-color:rgba(129,140,248,.3);}
+.chart-body{flex:1;display:flex;overflow:hidden;}
+.chart-canvas{flex:1;position:relative;background:var(--bg);}
+.chart-grid{position:absolute;inset:0;opacity:.15;}
+.candle-area{position:absolute;inset:0;display:flex;align-items:flex-end;gap:2px;padding:20px 40px 30px 10px;}
+.candle-col{display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;max-width:12px;}
+.wick{width:1.5px;border-radius:1px;}
+.candle-body{width:8px;border-radius:1px;}
+.price-axis{position:absolute;right:0;top:0;bottom:30px;width:58px;display:flex;flex-direction:column;justify-content:space-between;padding:20px 6px;font-family:var(--mono);font-size:10px;color:var(--tm);border-left:1px solid var(--bd);}
+.time-axis{position:absolute;bottom:0;left:0;right:58px;height:28px;display:flex;justify-content:space-around;align-items:center;font-family:var(--mono);font-size:10px;color:var(--tm);border-top:1px solid var(--bd);}
+.pos-line{position:absolute;left:0;right:58px;height:1px;border-top:1px dashed;}
+.pos-line.entry{border-color:var(--amb);}
+.pos-line.sl{border-color:var(--red);}
+.pos-line.tp{border-color:var(--grn);}
+.pos-line-label{position:absolute;right:60px;font-size:9px;font-family:var(--mono);padding:1px 4px;border-radius:2px;transform:translateY(-50%);}
+.trading-panel{width:200px;border-left:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0;background:var(--s1);}
+.tp-header{padding:12px;border-bottom:1px solid var(--bd);}
+.tp-btn-row{display:flex;gap:6px;margin-bottom:12px;}
+.tp-form{padding:12px;display:flex;flex-direction:column;gap:10px;}
+.tp-pos{margin:0 12px 12px;padding:10px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm);}
+
+/* ── CALENDAR ── */
+.cal-wrap{padding:20px;position:relative;}
+.cal-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;}
+.cal-month{font-size:16px;font-weight:600;color:var(--tp);}
+.cal-nav-btn{background:transparent;border:1px solid var(--bd);border-radius:var(--r-sm);width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ts);transition:all .12s;}
+.cal-nav-btn:hover{background:var(--s2);border-color:var(--bdh);}
+.cal-summary{margin-bottom:16px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:var(--r-md);overflow:hidden;}
+.cal-dow{background:var(--s2);padding:8px 0;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);}
+.cal-day{background:var(--s1);min-height:80px;padding:6px;display:flex;flex-direction:column;cursor:pointer;transition:background .1s;}
+.cal-day:hover{background:var(--s2);}
+.cal-day.profit{background:rgba(52,211,153,.05);}
+.cal-day.profit:hover{background:rgba(52,211,153,.1);}
+.cal-day.loss{background:rgba(248,113,113,.05);}
+.cal-day.loss:hover{background:rgba(248,113,113,.1);}
+.cal-day.today{outline:1px solid var(--bdh);}
+.cal-day.empty{background:var(--bg);cursor:default;}
+.cal-date{font-size:11px;color:var(--tm);}
+.cal-pnl{margin-top:auto;font-family:var(--mono);font-size:12px;font-weight:700;text-align:right;}
+.cal-pnl.pos{color:var(--grn);}
+.cal-pnl.neg{color:var(--red);}
+.cal-panel{position:fixed;right:0;top:48px;bottom:0;width:320px;background:var(--s2);border-left:1px solid var(--bd);z-index:50;animation:slideRight .22s ease;overflow-y:auto;}
+.cal-panel-header{padding:16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;}
+
+/* ── ANALYTICS ── */
+.chart-placeholder{width:100%;border:1px solid var(--bd);border-radius:var(--r-md);background:var(--s1);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.chart-ph-label{font-size:11px;color:var(--tm);position:absolute;top:10px;left:14px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;}
+.bar-chart{display:flex;align-items:flex-end;gap:3px;padding:30px 12px 12px;height:100%;width:100%;}
+.bar{border-radius:3px 3px 0 0;min-width:4px;transition:opacity .2s;}
+.bar:hover{opacity:.8;}
+.area-chart{position:relative;padding:24px 12px 20px;}
+.area-path{fill:rgba(129,140,248,.12);stroke:var(--acc);stroke-width:1.5;}
+.area-path.loss-area{fill:rgba(248,113,113,.1);stroke:var(--red);}
+
+/* ── ALERTS ── */
+.alert-card{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--s1);border:1px solid var(--bd);border-radius:var(--r-md);transition:border-color .12s;}
+.alert-card:hover{border-color:var(--bdh);}
+.alert-icon{width:36px;height:36px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.alert-icon.price{background:rgba(129,140,248,.1);color:var(--acc);}
+.alert-icon.drawdown{background:rgba(248,113,113,.1);color:var(--red);}
+.alert-icon.goal{background:rgba(52,211,153,.1);color:var(--grn);}
+.alert-info{flex:1;}
+.alert-desc{font-size:13px;color:var(--tp);font-weight:500;}
+.alert-val{font-size:11px;color:var(--tm);font-family:var(--mono);margin-top:2px;}
+.alert-triggered{opacity:.5;}
+
+/* ── PROFILE ── */
+.profile-header{text-align:center;padding:32px 24px 24px;}
+.profile-avatar-wrap{position:relative;display:inline-block;cursor:pointer;margin-bottom:12px;}
+.profile-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--acd),var(--acc));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;}
+.avatar-edit-btn{position:absolute;bottom:0;right:0;width:24px;height:24px;border-radius:50%;background:var(--s2);border:2px solid var(--bd);display:flex;align-items:center;justify-content:center;}
+.profile-name{font-size:20px;font-weight:700;color:var(--tp);}
+.profile-user{font-size:13px;color:var(--tm);margin-top:2px;}
+.section-card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r-md);margin-bottom:16px;}
+.section-card-title{padding:14px 16px;border-bottom:1px solid var(--bd);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);}
+.section-card-body{padding:16px;}
+
+/* ── SETTINGS ── */
+.settings-section{margin-bottom:24px;}
+.settings-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);margin-bottom:12px;}
+.seg-ctrl{display:flex;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px;gap:3px;}
+.seg-opt{padding:5px 14px;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;color:var(--tm);transition:all .12s;}
+.seg-opt.active{background:var(--acd);color:#fff;}
+.seg-opt:not(.active):hover{color:var(--ts);}
+.acct-row{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bd);}
+.acct-row:last-child{border-bottom:none;}
+.notif-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--bd);}
+.notif-row:last-child{border-bottom:none;}
+.kbd-row{display:flex;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--bd);font-size:12px;}
+.kbd-row:last-child{border-bottom:none;}
+.kbd-tag{font-family:var(--mono);font-size:11px;background:var(--s2);border:1px solid var(--bd);border-radius:4px;padding:1px 6px;color:var(--ts);}
+
+/* ── SYMBOL INFO ── */
+.spec-row{display:flex;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--bd);font-size:12px;}
+.spec-row:last-child{border-bottom:none;}
+.spec-lbl{color:var(--tm);}
+.spec-val{font-family:var(--mono);color:var(--tp);}
+
+/* ── HISTORY ── */
+.filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--bd);background:var(--s1);}
+.preview-row{background:var(--s2)!important;animation:fadeIn .15s ease;}
+.preview-content{padding:12px 20px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+.preview-stat{display:flex;flex-direction:column;gap:2px;}
+.preview-stat-lbl{font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;}
+.preview-stat-val{font-family:var(--mono);font-size:12px;color:var(--tp);}
+
+/* ── TRADE DETAIL ── */
+.detail-wrap{padding:20px;display:grid;grid-template-columns:1fr 340px;gap:20px;}
+.mini-chart{height:140px;border:1px solid var(--bd);border-radius:var(--r-md);background:var(--bg);overflow:hidden;position:relative;}
+.tag-input-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--r-sm);min-height:36px;}
+.tag-chip{display:flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(129,140,248,.1);border:1px solid rgba(129,140,248,.2);border-radius:4px;font-size:11px;color:var(--acc);}
+.tag-remove{cursor:pointer;opacity:.6;}
+.tag-remove:hover{opacity:1;}
+.notes-area{width:100%;resize:vertical;min-height:80px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--r-sm);color:var(--tp);font-family:var(--sans);font-size:13px;padding:8px 10px;outline:none;}
+.notes-area:focus{border-color:var(--acc);}
+
+/* ── SEARCH OVERLAY ── */
+.search-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:150;display:flex;flex-direction:column;align-items:center;padding-top:80px;animation:fadeIn .18s ease;}
+.search-box{width:540px;max-width:90vw;background:var(--s3);border:1px solid var(--bdh);border-radius:var(--r-lg);overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.6);}
+.search-input-wrap{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bd);}
+.search-input{flex:1;background:transparent;border:none;outline:none;font-size:15px;color:var(--tp);font-family:var(--sans);}
+.search-result{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;cursor:pointer;transition:background .1s;}
+.search-result:hover{background:var(--s2);}
+
+/* ── ERRORS ── */
+.error-page{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;text-align:center;}
+.error-code{font-size:80px;font-weight:700;font-family:var(--mono);color:var(--tm);line-height:1;}
+.error-msg{font-size:18px;font-weight:600;color:var(--tp);}
+.error-sub{font-size:13px;color:var(--tm);}
+
+/* ── EMPTY STATE ── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:12px;text-align:center;}
+.empty-icon{color:var(--tm);}
+.empty-title{font-size:14px;font-weight:600;color:var(--ts);}
+.empty-sub{font-size:12px;color:var(--tm);}
+
+/* ── MOBILE RESPONSIVE — JS controlled, not media query ── */
+/* Sidebar always rendered, bottom-nav always rendered */
+/* JS toggles .mobile-mode on #app based on container width */
+#app.mobile-mode #sidebar{ display:none !important; }
+#app.mobile-mode #bottom-nav{ display:flex !important; }
+#app.mobile-mode #content{ padding-bottom:60px; }
+#app.mobile-mode .detail-wrap{ grid-template-columns:1fr; }
+#app.mobile-mode .trading-panel{ display:none; }
+#app.mobile-mode #floating-pl{ bottom:76px; right:16px; }
+
+#bottom-nav{
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  height:60px;background:var(--s1);border-top:1px solid var(--bd);
+  flex-direction:row;z-index:100;
+}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--tm);font-size:10px;font-weight:500;transition:color .12s;}
+.bn-item.active{color:var(--acc);}
+.bn-item svg{width:18px;height:18px;}
+</style>
+</head>
+<body>
+
+<!-- ── AUTH PAGES ── -->
+<div id="page-login" class="active">
+  <div class="auth-card">
+    <div class="auth-logo">Ribon7</div>
+    <div class="auth-sub">Sign in to your account</div>
+    <div class="auth-form">
+      <div class="field-group">
+        <div class="field-label">Email</div>
+        <input class="input" type="email" placeholder="you@example.com" value="trader@ribon7.io">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Password</div>
+        <input class="input" type="password" placeholder="••••••••" value="password">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="goToApp()">Sign In</button>
+    </div>
+    <div class="auth-footer">Don't have an account? <span onclick="showRegister()">Create one</span></div>
+  </div>
+</div>
+
+<div id="page-register">
+  <div class="auth-card">
+    <div class="auth-logo">Ribon7</div>
+    <div class="auth-sub">Create your account</div>
+    <div class="auth-form">
+      <div class="field-group"><div class="field-label">Full Name</div><input class="input" placeholder="Your name"></div>
+      <div class="field-group"><div class="field-label">Email</div><input class="input" type="email" placeholder="you@example.com"></div>
+      <div class="field-group"><div class="field-label">Password</div><input class="input" type="password" placeholder="••••••••"></div>
+      <div style="padding:10px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm);font-size:12px;color:var(--ts);">
+        Your username will be: <span style="font-family:var(--mono);color:var(--acc);">swift_trader_492</span>
+        <span style="float:right;color:var(--acc);cursor:pointer;font-size:11px;">Edit</span>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="showOnboarding()">Create Account</button>
+    </div>
+    <div class="auth-footer">Already have an account? <span onclick="showLogin()">Sign in</span></div>
+  </div>
+</div>
+
+<div id="page-onboarding">
+  <div class="auth-card ob-card">
+    <div class="ob-dots">
+      <div class="ob-dot active" id="ob-dot-1"></div>
+      <div class="ob-dot" id="ob-dot-2"></div>
+      <div class="ob-dot" id="ob-dot-3"></div>
+      <div class="ob-dot" id="ob-dot-4"></div>
+      <div class="ob-dot" id="ob-dot-5"></div>
+    </div>
+    <div id="ob-content">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div id="app" style="display:none;">
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="logo-wrap">
+      <div class="logo">R7</div>
+      <span class="logo-text">Ribon7</span>
+    </div>
+    <div class="nav-item active" onclick="nav('home')" id="nav-home">
+      <svg viewBox="0 0 16 16" fill="none"><path d="M2 6.5L8 2l6 4.5V14h-4v-4H6v4H2V6.5z" fill="currentColor"/></svg>
+      <span class="nav-label">Watchlist</span>
+    </div>
+    <div class="nav-item" onclick="nav('hub')" id="nav-hub">
+      <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2" fill="currentColor"/><path d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 1.5a4.5 4.5 0 110 9 4.5 4.5 0 010-9z" fill="currentColor"/></svg>
+      <span class="nav-label">Hub</span>
+    </div>
+    <div class="nav-item" onclick="nav('chart')" id="nav-chart">
+      <svg viewBox="0 0 16 16" fill="none"><polyline points="2,12 5.5,8 8.5,10.5 12,5 14,6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="nav-label">Chart</span>
+    </div>
+    <div class="nav-item" onclick="nav('history')" id="nav-history">
+      <svg viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="3" width="12" height="1.5" rx=".75"/><rect x="2" y="7" width="12" height="1.5" rx=".75"/><rect x="2" y="11" width="8" height="1.5" rx=".75"/></svg>
+      <span class="nav-label">History</span>
+    </div>
+    <div class="nav-item" onclick="nav('analytics')" id="nav-analytics">
+      <svg viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="9" width="3" height="5" rx="1"/><rect x="6.5" y="6" width="3" height="8" rx="1"/><rect x="11" y="3" width="3" height="11" rx="1"/></svg>
+      <span class="nav-label">Analytics</span>
+    </div>
+    <div class="nav-item" onclick="nav('calendar')" id="nav-calendar">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M2 7h12M5 2v2M11 2v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span class="nav-label">Calendar</span>
+    </div>
+    <div class="nav-spacer"></div>
+    <div class="nav-item" onclick="nav('alerts')" id="nav-alerts">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a4.5 4.5 0 014.5 4.5v3l1 1.5H2.5l1-1.5V5.5A4.5 4.5 0 018 1zm0 13.5a1.5 1.5 0 01-1.5-1.5h3A1.5 1.5 0 018 14.5z"/></svg>
+      <span class="nav-label">Alerts</span>
+    </div>
+    <div class="nav-item" onclick="nav('profile')" id="nav-profile">
+      <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span class="nav-label">Profile</span>
+    </div>
+    <div class="nav-item" onclick="nav('settings')" id="nav-settings">
+      <svg viewBox="0 0 16 16" fill="none"><path d="M8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" stroke="currentColor" stroke-width="1.3"/><path d="M13.5 8a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z" stroke="currentColor" stroke-width="1.3"/></svg>
+      <span class="nav-label">Settings</span>
+    </div>
+    <div style="height:10px;"></div>
+    <div class="live-row">
+      <div class="live-dot"></div>
+      <span class="live-label">Live</span>
+    </div>
+    <div class="avatar-row" onclick="nav('profile')" style="margin-top:6px;">
+      <div class="avatar">KO</div>
+      <span class="avatar-name">swift_trader_492</span>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div id="main">
+    <!-- CONNECTION BANNER -->
+    <div id="connection-banner" style="display:none;background:rgba(251,191,36,.08);border-bottom:1px solid rgba(251,191,36,.25);padding:6px 20px;flex-shrink:0;align-items:center;gap:10px;z-index:10;"></div>
+
+    <!-- TOPBAR -->
+    <div id="topbar">
+      <span class="topbar-title" id="page-title">Watchlist</span>
+      <div class="topbar-actions">
+        <button class="icon-btn" onclick="toggleLayout()" id="layout-toggle" title="Toggle sidebar / bottom nav" style="border-color:var(--bdh);">
+          <svg id="layout-icon-sidebar" viewBox="0 0 14 14" fill="none" style="display:block"><rect x="1" y="2" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="2" x2="5" y2="12" stroke="currentColor" stroke-width="1.2"/></svg>
+          <svg id="layout-icon-mobile" viewBox="0 0 14 14" fill="none" style="display:none"><rect x="3" y="1" width="8" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/><line x1="3" y1="9.5" x2="11" y2="9.5" stroke="currentColor" stroke-width="1.2"/></svg>
+        </button>
+        <button class="kbd-btn" onclick="showCmdPalette()">
+          <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.3" fill="none"/><line x1="7.5" y1="7.5" x2="10.5" y2="10.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span>⌘K</span>
+        </button>
+        <div class="acct-pill" onclick="showToast('Switching accounts...','warn')">
+          <div class="acct-dot"></div>
+          <span>Exness #12345678</span>
+          <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 4l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <button class="icon-btn" onclick="showToast('No new notifications','info')">
+          <svg viewBox="0 0 14 14" fill="none"><path d="M7 1a4 4 0 014 4v2.5l.8 1.2H2.2L3 7.5V5a4 4 0 014-4zm0 12a1.5 1.5 0 01-1.5-1.5h3A1.5 1.5 0 017 13z" fill="currentColor"/></svg>
+        </button>
+        <div class="avatar" style="cursor:pointer;" onclick="nav('profile')">KO</div>
+      </div>
+    </div>
+
+    <!-- PAGES -->
+    <div id="content">
+
+      <!-- ── HOME / WATCHLIST ── -->
+      <div class="page active" id="page-home">
+        <div class="symbol-list" id="watchlist">
+          <!-- injected by JS -->
+        </div>
+      </div>
+
+      <!-- ── HUB ── -->
+      <div class="page" id="page-hub">
+        <div class="hub-wrap">
+          <div class="stat-strip" id="hub-stat-strip" style="grid-template-columns:repeat(6,1fr);">
+            <div class="stat-item"><div class="stat-lbl">Balance</div><div class="stat-val mono">$12,450.00</div></div>
+            <div class="stat-item"><div class="stat-lbl">Equity</div><div class="stat-val mono">$12,680.40</div></div>
+            <div class="stat-item"><div class="stat-lbl">Margin</div><div class="stat-val mono">$312.50</div></div>
+            <div class="stat-item"><div class="stat-lbl">Free Margin</div><div class="stat-val mono">$12,367.90</div></div>
+            <div class="stat-item"><div class="stat-lbl">Margin Level</div><div class="stat-val warn mono">4,057%</div></div>
+            <div class="stat-item"><div class="stat-lbl">Floating P&amp;L</div><div class="stat-val pos mono">+$230.40</div></div>
+          </div>
+          <div class="hub-content">
+            <div class="sec-hdr">
+              <div class="sec-hdr-left">
+                <span class="sec-title">Positions</span>
+                <span class="count-badge">3</span>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="showNewOrder()">
+                <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 2v6M2 5h6" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+                New Order
+              </button>
+            </div>
+            <div class="tbl-wrap scrollable" style="margin-bottom:24px;">
+              <table class="tbl" id="positions-table" style="min-width:680px;">
+                <thead><tr>
+                  <th>Symbol</th><th>Type</th><th>Volume</th><th>Open</th><th>Current</th><th>SL</th><th>TP</th><th class="right" style="position:sticky;right:60px;background:var(--s2);z-index:2;">Profit</th><th class="right" style="position:sticky;right:0;background:var(--s2);z-index:2;">Actions</th>
+                </tr></thead>
+                <tbody id="positions-body"></tbody>
+              </table>
+            </div>
+            <div class="sec-hdr">
+              <div class="sec-hdr-left"><span class="sec-title">Pending Orders</span><span class="count-badge">2</span></div>
+            </div>
+            <div class="tbl-wrap scrollable">
+              <table class="tbl" style="min-width:560px;">
+                <thead><tr><th>Symbol</th><th>Type</th><th>Volume</th><th>Price</th><th>SL</th><th>TP</th><th class="right" style="position:sticky;right:0;background:var(--s2);z-index:2;">Actions</th></tr></thead>
+                <tbody>
+                  <tr><td class="text-pri mono" style="font-weight:600">USDJPY</td><td><span class="chip chip-warn">BUY LIMIT</span></td><td class="mono">0.20</td><td class="mono">148.200</td><td class="mono text-mut">147.500</td><td class="mono text-mut">149.500</td><td class="right"><div class="act-cell"><button class="btn-icon danger" onclick="showToast('Order cancelled','err')"><svg viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button></div></td></tr>
+                  <tr><td class="text-pri mono" style="font-weight:600">GBPUSD</td><td><span class="chip chip-sell">SELL STOP</span></td><td class="mono">0.10</td><td class="mono">1.25800</td><td class="mono text-mut">1.26200</td><td class="mono text-mut">1.24500</td><td class="right"><div class="act-cell"><button class="btn-icon danger" onclick="showToast('Order cancelled','err')"><svg viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CHART ── -->
+      <div class="page" id="page-chart" style="height:100%;overflow:hidden;">
+        <div class="chart-wrap" style="height:100%;display:flex;flex-direction:column;">
+          <div class="chart-header">
+            <span class="chart-sym">EURUSD</span>
+            <span class="chart-price">1.08534 / 1.08537</span>
+            <span class="chip chip-warn" style="font-size:9px">+2 pip</span>
+            <span class="chip chip-buy" style="font-size:9px">+0.12%</span>
+            <span class="chip chip-live"><span class="chip-dot"></span>Live</span>
+            <div style="flex:1;"></div>
+            <button class="btn btn-secondary btn-sm" onclick="showSearchOverlay()">
+              <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.3" fill="none"/><line x1="7.5" y1="7.5" x2="10.5" y2="10.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              Change Symbol
+            </button>
+          </div>
+          <div class="tf-row">
+            <span class="tf-tab" onclick="setTF(this)">M1</span>
+            <span class="tf-tab" onclick="setTF(this)">M5</span>
+            <span class="tf-tab" onclick="setTF(this)">M15</span>
+            <span class="tf-tab active" onclick="setTF(this)">H1</span>
+            <span class="tf-tab" onclick="setTF(this)">H4</span>
+            <span class="tf-tab" onclick="setTF(this)">D1</span>
+            <div class="ind-sep"></div>
+            <span class="ind-btn active" onclick="this.classList.toggle('active')">MA</span>
+            <span class="ind-btn" onclick="this.classList.toggle('active')">EMA</span>
+            <span class="ind-btn" onclick="this.classList.toggle('active')">RSI</span>
+            <span class="ind-btn" onclick="this.classList.toggle('active')">MACD</span>
+            <span class="ind-btn" onclick="this.classList.toggle('active')">BB</span>
+          </div>
+          <div class="chart-body" style="flex:1;overflow:hidden;">
+            <div class="chart-canvas" id="chart-canvas">
+              <!-- Candles rendered by JS -->
+              <div class="price-axis" id="price-axis"></div>
+              <div class="time-axis" id="time-axis"></div>
+              <div class="pos-line entry" style="top:38%;">
+                <span class="pos-line-label" style="background:rgba(251,191,36,.1);color:var(--amb);top:38%;">Entry 1.08412</span>
+              </div>
+              <div class="pos-line tp" style="top:22%;">
+                <span class="pos-line-label" style="background:rgba(52,211,153,.1);color:var(--grn);top:22%;">TP 1.09000</span>
+              </div>
+              <div class="pos-line sl" style="top:72%;">
+                <span class="pos-line-label" style="background:rgba(248,113,113,.1);color:var(--red);top:72%;">SL 1.08100</span>
+              </div>
+            </div>
+            <div class="trading-panel">
+              <div class="tp-header">
+                <div class="tp-btn-row">
+                  <button class="btn btn-buy" onclick="showTradingForm('buy')">Buy</button>
+                  <button class="btn btn-sell" onclick="showTradingForm('sell')">Sell</button>
+                </div>
+              </div>
+              <div class="tp-form" id="tp-form">
+                <div class="field-group"><div class="field-label">Volume</div><input class="input mono" value="0.10"></div>
+                <div class="field-group"><div class="field-label">Stop Loss</div><input class="input mono" placeholder="1.08100"></div>
+                <div class="field-group"><div class="field-label">Take Profit</div><input class="input mono" placeholder="1.09000"></div>
+                <div class="field-group"><div class="field-label">Order Type</div>
+                  <select class="input"><option>Market</option><option>Limit</option><option>Stop</option></select>
+                </div>
+                <button class="btn btn-primary" style="width:100%" onclick="showToast('Order placed — EURUSD BUY 0.10','success')">Confirm Order</button>
+              </div>
+              <div class="tp-pos">
+                <div style="font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">Open Position</div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:11px;color:var(--ts);">EURUSD BUY</span><span class="chip chip-buy" style="font-size:9px">BUY</span></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="font-size:10px;color:var(--tm);">Entry 1.08412</span><span class="pos mono text-grn" style="font-size:13px;font-weight:700;">+$61.00</span></div>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn btn-secondary btn-sm" style="flex:1" onclick="showToast('Modify SL/TP','info')">Modify</button>
+                  <button class="btn btn-danger btn-sm" style="flex:1" onclick="showToast('Position closed +$61.00','success')">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SYMBOL INFO ── -->
+      <div class="page" id="page-symbol">
+        <div class="page-pad">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+            <button class="btn btn-ghost btn-sm" onclick="nav('home')">
+              <svg width="14" height="14" viewBox="0 0 14 14"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+            </button>
+            <span style="font-size:18px;font-weight:700;color:var(--tp);font-family:var(--mono);">EURUSD</span>
+            <span style="font-size:13px;color:var(--tm);">Euro vs US Dollar</span>
+          </div>
+          <div class="grid-2">
+            <div>
+              <div class="section-card" style="margin-bottom:16px;">
+                <div class="section-card-title">Contract Specs</div>
+                <div class="spec-row"><span class="spec-lbl">Description</span><span class="spec-val">Euro vs US Dollar</span></div>
+                <div class="spec-row"><span class="spec-lbl">Base Currency</span><span class="spec-val">EUR</span></div>
+                <div class="spec-row"><span class="spec-lbl">Profit Currency</span><span class="spec-val">USD</span></div>
+                <div class="spec-row"><span class="spec-lbl">Contract Size</span><span class="spec-val">100,000</span></div>
+                <div class="spec-row"><span class="spec-lbl">Tick Size</span><span class="spec-val">0.00001</span></div>
+                <div class="spec-row"><span class="spec-lbl">Tick Value</span><span class="spec-val">$1.00</span></div>
+                <div class="spec-row"><span class="spec-lbl">Digits</span><span class="spec-val">5</span></div>
+                <div class="spec-row"><span class="spec-lbl">Spread</span><span class="spec-val">0.8 pip</span></div>
+                <div class="spec-row"><span class="spec-lbl">Swap Long</span><span class="spec-val text-red">-3.21</span></div>
+                <div class="spec-row"><span class="spec-lbl">Swap Short</span><span class="spec-val text-grn">+1.05</span></div>
+              </div>
+              <div class="section-card">
+                <div class="section-card-title">Trading Hours (UTC)</div>
+                <div class="spec-row"><span class="spec-lbl">Mon – Fri</span><span class="spec-val">00:00 – 24:00</span></div>
+                <div class="spec-row"><span class="spec-lbl">Saturday</span><span class="spec-val" style="color:var(--red)">Closed</span></div>
+                <div class="spec-row"><span class="spec-lbl">Sunday</span><span class="spec-val">Opens 22:00</span></div>
+              </div>
+            </div>
+            <div>
+              <div class="section-card">
+                <div class="section-card-title">My Performance — EURUSD</div>
+                <div class="section-card-body">
+                  <div class="grid-2" style="gap:12px;margin-bottom:16px;">
+                    <div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm);padding:12px;">
+                      <div class="stat-lbl" style="margin-bottom:4px;">Total Trades</div>
+                      <div class="stat-val mono" style="font-size:22px;">47</div>
+                    </div>
+                    <div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm);padding:12px;">
+                      <div class="stat-lbl" style="margin-bottom:4px;">Win Rate</div>
+                      <div class="stat-val mono pos" style="font-size:22px;">68%</div>
+                    </div>
+                    <div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm);padding:12px;">
+                      <div class="stat-lbl" style="margin-bottom:4px;">Total Profit</div>
+                      <div class="stat-val mono pos" style="font-size:18px;">+$1,247</div>
+                    </div>
+                    <div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm);padding:12px;">
+                      <div class="stat-lbl" style="margin-bottom:4px;">Avg Profit</div>
+                      <div class="stat-val mono pos" style="font-size:18px;">+$26.5</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── HISTORY ── -->
+      <div class="page" id="page-history">
+        <div class="filter-bar" id="history-filter-bar">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%;">
+            <input class="input" style="width:130px;min-width:100px;flex:1;" type="date" value="2025-01-01">
+            <span style="color:var(--tm);font-size:12px;flex-shrink:0;">—</span>
+            <input class="input" style="width:130px;min-width:100px;flex:1;" type="date" value="2025-03-21">
+            <input class="input" style="width:100px;min-width:80px;flex:1;" placeholder="Symbol...">
+            <select class="input" style="width:90px;min-width:80px;flex:1;"><option>All Types</option><option>Buy</option><option>Sell</option></select>
+            <select class="input" style="width:100px;min-width:80px;flex:1;"><option>All Results</option><option>Profit</option><option>Loss</option></select>
+            <span class="count-badge">128 trades</span>
+          </div>
+        </div>
+        <div class="tbl-wrap scrollable" style="margin:0;border-radius:0;border-left:none;border-right:none;border-bottom:none;" id="history-tbl-wrap">
+          <!-- scroll hint shown only when overflowing -->
+          <div id="history-scroll-hint" style="display:none;padding:4px 16px;background:var(--s2);font-size:10px;color:var(--tm);text-align:center;border-bottom:1px solid var(--bd);">
+            ← Scroll to see all columns →
+          </div>
+          <table class="tbl" id="history-table" style="min-width:700px;">
+            <thead><tr>
+              <th>Ticket</th><th>Symbol</th><th>Type</th><th>Vol</th><th>Open</th><th>Close</th><th>Open Time</th><th>Close Time</th>
+              <th class="right" style="position:sticky;right:0;background:var(--s2);z-index:2;">Profit</th>
+            </tr></thead>
+            <tbody id="history-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── TRADE DETAIL ── -->
+      <div class="page" id="page-detail">
+        <div class="page-pad">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+            <button class="btn btn-ghost btn-sm" onclick="nav('history')">
+              <svg width="14" height="14" viewBox="0 0 14 14"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+            </button>
+            <span style="font-size:18px;font-weight:700;color:var(--tp);">Trade <span class="mono">#10847221</span></span>
+          </div>
+          <div class="detail-wrap" style="padding:0">
+            <div>
+              <div class="section-card" style="margin-bottom:16px;">
+                <div class="section-card-title">Trade Info</div>
+                <div class="spec-row"><span class="spec-lbl">Symbol</span><span class="spec-val">EURUSD</span></div>
+                <div class="spec-row"><span class="spec-lbl">Direction</span><span><span class="chip chip-buy">BUY</span></span></div>
+                <div class="spec-row"><span class="spec-lbl">Volume</span><span class="spec-val">0.50 lot</span></div>
+                <div class="spec-row"><span class="spec-lbl">Open Price</span><span class="spec-val">1.08250</span></div>
+                <div class="spec-row"><span class="spec-lbl">Close Price</span><span class="spec-val">1.08372</span></div>
+                <div class="spec-row"><span class="spec-lbl">Stop Loss</span><span class="spec-val">1.07900</span></div>
+                <div class="spec-row"><span class="spec-lbl">Take Profit</span><span class="spec-val">1.08800</span></div>
+                <div class="spec-row"><span class="spec-lbl">Open Time</span><span class="spec-val">2025-03-18 09:14:22</span></div>
+                <div class="spec-row"><span class="spec-lbl">Close Time</span><span class="spec-val">2025-03-18 14:42:07</span></div>
+                <div class="spec-row"><span class="spec-lbl">Duration</span><span class="spec-val">5h 27m 45s</span></div>
+                <div class="spec-row"><span class="spec-lbl">Commission</span><span class="spec-val text-red">-$3.50</span></div>
+                <div class="spec-row"><span class="spec-lbl">Swap</span><span class="spec-val text-red">-$0.80</span></div>
+                <div class="spec-row"><span class="spec-lbl">Pips</span><span class="spec-val text-grn">+12.2 pips</span></div>
+                <div class="spec-row"><span class="spec-lbl">R:R Ratio</span><span class="spec-val text-acc">1:1.72</span></div>
+                <div class="spec-row"><span class="spec-lbl">Net Profit</span><span class="spec-val text-grn" style="font-size:15px;font-weight:700;">+$61.00</span></div>
+              </div>
+              <div class="section-card">
+                <div class="section-card-title">Price Action</div>
+                <div class="mini-chart" style="height:140px;margin:12px;" id="mini-chart">
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="section-card" style="margin-bottom:16px;">
+                <div class="section-card-title">Symbol Info</div>
+                <div class="spec-row"><span class="spec-lbl">Contract Size</span><span class="spec-val">100,000</span></div>
+                <div class="spec-row"><span class="spec-lbl">Tick Value</span><span class="spec-val">$1.00</span></div>
+                <div class="spec-row"><span class="spec-lbl">Swap Long</span><span class="spec-val text-red">-3.21</span></div>
+                <div class="spec-row"><span class="spec-lbl">Swap Short</span><span class="spec-val text-grn">+1.05</span></div>
+              </div>
+              <div class="section-card">
+                <div class="section-card-title">Journal</div>
+                <div class="section-card-body">
+                  <div class="field-group" style="margin-bottom:12px;">
+                    <div class="field-label">Tags</div>
+                    <div class="tag-input-wrap" onclick="addTag()">
+                      <span class="tag-chip">trend-follow <span class="tag-remove" onclick="removeTag(event,this)">×</span></span>
+                      <span class="tag-chip">london-session <span class="tag-remove" onclick="removeTag(event,this)">×</span></span>
+                      <span class="tag-chip">breakout <span class="tag-remove" onclick="removeTag(event,this)">×</span></span>
+                      <input style="border:none;outline:none;background:transparent;color:var(--tp);font-size:12px;min-width:80px;" placeholder="Add tag..." onkeydown="if(event.key==='Enter')addTagFromInput(this)">
+                    </div>
+                  </div>
+                  <div class="field-group">
+                    <div class="field-label">Notes</div>
+                    <textarea class="notes-area" onblur="showToast('Journal saved ✓','success')">Entered on the London open breakout of the Asian range. Good R:R setup. Exited slightly early but still captured majority of the move. Price respected the 50 EMA.</textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CALENDAR ── -->
+      <div class="page" id="page-calendar">
+        <div class="cal-wrap">
+          <div class="cal-nav">
+            <button class="cal-nav-btn" onclick="changeMonth(-1)">
+              <svg width="10" height="10" viewBox="0 0 10 10"><path d="M7 2L3 5l4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+            </button>
+            <span class="cal-month" id="cal-month-label">March 2025</span>
+            <button class="cal-nav-btn" onclick="changeMonth(1)">
+              <svg width="10" height="10" viewBox="0 0 10 10"><path d="M3 2l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+            </button>
+            <div style="margin-left:auto;position:relative;">
+              <button class="btn btn-secondary btn-sm" onclick="toggleCalExport()" id="cal-export-btn">
+                <svg width="11" height="11" viewBox="0 0 11 11"><path d="M5.5 1v6M2 8l3.5 2.5L9 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                Export
+                <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 4l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+              </button>
+              <div id="cal-export-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--s3);border:1px solid var(--bdh);border-radius:var(--r-md);width:180px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden;">
+                <div onclick="shareCalAsImage()" style="padding:10px 14px;cursor:pointer;font-size:12px;color:var(--ts);display:flex;align-items:center;gap:8px;transition:background .1s;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="3" width="11" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M1 6l3 3 3-3 4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Share as Image
+                </div>
+                <div style="height:1px;background:var(--bd);"></div>
+                <div onclick="downloadCalPDF()" style="padding:10px 14px;cursor:pointer;font-size:12px;color:var(--ts);display:flex;align-items:center;gap:8px;transition:background .1s;" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='transparent'">
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 1h6l3 3v8a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1z" stroke="currentColor" stroke-width="1.2"/><path d="M8 1v3h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                  Download PDF
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="cal-summary" id="cal-summary"></div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </div>
+        <div class="cal-panel" id="cal-panel" style="display:none;"></div>
+      </div>
+
+      <!-- ── ANALYTICS ── -->
+      <div class="page" id="page-analytics">
+        <div class="page-pad">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+            <span style="font-size:12px;color:var(--tm);">Date range:</span>
+            <input class="input" style="width:130px" type="date" value="2025-01-01">
+            <span style="color:var(--tm);">—</span>
+            <input class="input" style="width:130px" type="date" value="2025-03-21">
+            <button class="btn btn-secondary btn-sm">Apply</button>
+          </div>
+          <div class="grid-4" style="margin-bottom:16px;">
+            <div class="card card-body"><div class="stat-lbl" style="margin-bottom:6px;">Total Trades</div><div style="font-family:var(--mono);font-size:28px;font-weight:700;color:var(--tp);">128</div></div>
+            <div class="card card-body"><div class="stat-lbl" style="margin-bottom:6px;">Win Rate</div><div style="font-family:var(--mono);font-size:28px;font-weight:700;color:var(--grn);">64.1%</div></div>
+            <div class="card card-body"><div class="stat-lbl" style="margin-bottom:6px;">Profit Factor</div><div style="font-family:var(--mono);font-size:28px;font-weight:700;color:var(--acc);">1.87</div></div>
+            <div class="card card-body"><div class="stat-lbl" style="margin-bottom:6px;">Avg R:R</div><div style="font-family:var(--mono);font-size:28px;font-weight:700;color:var(--tp);">1.42</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div class="card card-body"><div class="stat-lbl" style="margin-bottom:6px;">Total Profit</div><div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--grn);text-shadow:0 0 8px rgba(52,211,153,.3);">+$4,280.50</div></div>
+            <div class="card card-body"><div class="stat-lbl" style="margin-bottom:6px;">Avg Win</div><div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--grn);">+$52.30</div></div>
+            <div class="card card-body"><div class="stat-lbl" style="margin-bottom:6px;">Avg Loss</div><div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--red);">-$28.10</div></div>
+          </div>
+          <!-- Equity Curve -->
+          <div class="chart-placeholder" style="height:160px;margin-bottom:16px;">
+            <div class="chart-ph-label">Equity Curve</div>
+            <svg width="100%" height="100%" style="position:absolute;inset:0;" preserveAspectRatio="none">
+              <defs><linearGradient id="eq-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#818CF8" stop-opacity=".25"/><stop offset="100%" stop-color="#818CF8" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,140 L40,130 L80,120 L120,115 L160,105 L200,95 L240,88 L280,70 L320,75 L360,60 L400,52 L440,45 L480,38 L520,30 L560,20 L600,22 L640,15 L680,10 L720,5 L760,8" fill="none" stroke="#818CF8" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+              <path d="M0,140 L40,130 L80,120 L120,115 L160,105 L200,95 L240,88 L280,70 L320,75 L360,60 L400,52 L440,45 L480,38 L520,30 L560,20 L600,22 L640,15 L680,10 L720,5 L760,8 L760,160 L0,160 Z" fill="url(#eq-fill)"/>
+            </svg>
+          </div>
+          <!-- Drawdown -->
+          <div class="chart-placeholder" style="height:120px;margin-bottom:16px;">
+            <div class="chart-ph-label">Drawdown</div>
+            <svg width="100%" height="100%" style="position:absolute;inset:0;" preserveAspectRatio="none">
+              <defs><linearGradient id="dd-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F87171" stop-opacity="0"/><stop offset="100%" stop-color="#F87171" stop-opacity=".2"/></linearGradient></defs>
+              <path d="M0,20 L60,25 L120,40 L180,35 L240,50 L300,45 L360,55 L420,48 L480,42 L540,38 L600,30 L660,28 L720,22 L760,20" fill="none" stroke="#F87171" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+              <path d="M0,20 L60,25 L120,40 L180,35 L240,50 L300,45 L360,55 L420,48 L480,42 L540,38 L600,30 L660,28 L720,22 L760,20 L760,120 L0,120 Z" fill="url(#dd-fill)"/>
+            </svg>
+          </div>
+          <div class="grid-3">
+            <div class="chart-placeholder" style="height:160px;">
+              <div class="chart-ph-label">By Symbol</div>
+              <div style="padding:32px 12px 12px;width:100%;display:flex;flex-direction:column;gap:5px;">
+                <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:10px;font-family:var(--mono);color:var(--tm);width:60px;">EURUSD</span><div style="flex:1;height:12px;background:rgba(52,211,153,.15);border-radius:2px;position:relative;"><div style="position:absolute;left:0;top:0;bottom:0;width:80%;background:var(--grn);border-radius:2px;opacity:.7;"></div></div><span style="font-size:10px;font-family:var(--mono);color:var(--grn);">+$1,247</span></div>
+                <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:10px;font-family:var(--mono);color:var(--tm);width:60px;">XAUUSD</span><div style="flex:1;height:12px;background:rgba(52,211,153,.1);border-radius:2px;position:relative;"><div style="position:absolute;left:0;top:0;bottom:0;width:55%;background:var(--grn);border-radius:2px;opacity:.7;"></div></div><span style="font-size:10px;font-family:var(--mono);color:var(--grn);">+$840</span></div>
+                <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:10px;font-family:var(--mono);color:var(--tm);width:60px;">GBPJPY</span><div style="flex:1;height:12px;background:rgba(248,113,113,.1);border-radius:2px;position:relative;"><div style="position:absolute;left:0;top:0;bottom:0;width:25%;background:var(--red);border-radius:2px;opacity:.7;"></div></div><span style="font-size:10px;font-family:var(--mono);color:var(--red);">-$186</span></div>
+                <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:10px;font-family:var(--mono);color:var(--tm);width:60px;">USDJPY</span><div style="flex:1;height:12px;background:rgba(52,211,153,.08);border-radius:2px;position:relative;"><div style="position:absolute;left:0;top:0;bottom:0;width:35%;background:var(--grn);border-radius:2px;opacity:.7;"></div></div><span style="font-size:10px;font-family:var(--mono);color:var(--grn);">+$520</span></div>
+              </div>
+            </div>
+            <div class="chart-placeholder" style="height:160px;">
+              <div class="chart-ph-label">By Weekday</div>
+              <div class="bar-chart">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;"><div class="bar" style="height:60%;width:100%;background:var(--grn);opacity:.7;"></div><span style="font-size:9px;color:var(--tm);">Mon</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;"><div class="bar" style="height:85%;width:100%;background:var(--grn);opacity:.7;"></div><span style="font-size:9px;color:var(--tm);">Tue</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;"><div class="bar" style="height:40%;width:100%;background:var(--red);opacity:.7;"></div><span style="font-size:9px;color:var(--tm);">Wed</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;"><div class="bar" style="height:70%;width:100%;background:var(--grn);opacity:.7;"></div><span style="font-size:9px;color:var(--tm);">Thu</span></div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;"><div class="bar" style="height:55%;width:100%;background:var(--grn);opacity:.7;"></div><span style="font-size:9px;color:var(--tm);">Fri</span></div>
+              </div>
+            </div>
+            <div class="chart-placeholder" style="height:160px;align-items:center;justify-content:center;">
+              <div class="chart-ph-label">By Session</div>
+              <svg width="120" height="120" viewBox="0 0 120 120" style="margin-top:20px;">
+                <circle cx="60" cy="60" r="45" fill="none" stroke="var(--bd)" stroke-width="20"/>
+                <circle cx="60" cy="60" r="45" fill="none" stroke="var(--cyn)" stroke-width="20" stroke-dasharray="84.8 197.9" stroke-dashoffset="0" opacity=".8"/>
+                <circle cx="60" cy="60" r="45" fill="none" stroke="var(--acc)" stroke-width="20" stroke-dasharray="113.1 197.9" stroke-dashoffset="-84.8" opacity=".8"/>
+                <circle cx="60" cy="60" r="45" fill="none" stroke="var(--grn)" stroke-width="20" stroke-dasharray="84.8 197.9" stroke-dashoffset="-197.9" opacity=".7"/>
+              </svg>
+              <div style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:10px;">
+                <span style="font-size:9px;color:var(--cyn);">● Asian</span>
+                <span style="font-size:9px;color:var(--acc);">● London</span>
+                <span style="font-size:9px;color:var(--grn);">● NY</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ALERTS ── -->
+      <div class="page" id="page-alerts">
+        <div class="page-pad">
+          <div class="sec-hdr">
+            <span class="sec-title">Alerts</span>
+            <button class="btn btn-primary btn-sm" onclick="showNewAlert()">
+              <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 2v6M2 5h6" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+              Create Alert
+            </button>
+          </div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);margin-bottom:10px;">Active</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+            <div class="alert-card">
+              <div class="alert-icon price"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M4 6h8M4 10h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+              <div class="alert-info"><div class="alert-desc">EURUSD above 1.09500</div><div class="alert-val">Price Alert · Last check: 2s ago</div></div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+              <button class="btn-icon danger" onclick="this.closest('.alert-card').remove()"><svg viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+            </div>
+            <div class="alert-card">
+              <div class="alert-icon drawdown"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4l4 4 3-2 5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div class="alert-info"><div class="alert-desc">Drawdown reaches 75%</div><div class="alert-val">Drawdown Alert · Account-wide</div></div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+              <button class="btn-icon danger" onclick="this.closest('.alert-card').remove()"><svg viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+            </div>
+            <div class="alert-card">
+              <div class="alert-icon goal"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.3"/><line x1="8" y1="2" x2="8" y2="4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+              <div class="alert-info"><div class="alert-desc">Daily profit target $200</div><div class="alert-val">Daily Goal · Max loss: -$100</div></div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+              <button class="btn-icon danger" onclick="this.closest('.alert-card').remove()"><svg viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+            </div>
+          </div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);margin-bottom:10px;">Triggered</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="alert-card alert-triggered">
+              <div class="alert-icon price"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M4 6h8M4 10h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+              <div class="alert-info"><div class="alert-desc">XAUUSD below 2300</div><div class="alert-val">Triggered Mar 15, 2025 · 14:22 UTC</div></div>
+              <span class="chip chip-warn" style="font-size:9px;">TRIGGERED</span>
+              <button class="btn-icon danger" onclick="this.closest('.alert-card').remove()"><svg viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PROFILE ── -->
+      <div class="page" id="page-profile">
+        <div class="profile-header">
+          <div class="profile-avatar-wrap" onclick="showToast('Avatar upload coming soon','info')">
+            <div class="profile-avatar">KO</div>
+            <div class="avatar-edit-btn">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 9l2-2 5-5-2-2-5 5-2 2 2 2z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+          <div class="profile-name">Kofi Osei</div>
+          <div class="profile-user">@swift_trader_492</div>
+        </div>
+        <div style="padding:0 24px 24px;">
+          <div class="section-card" style="margin-bottom:16px;">
+            <div class="section-card-title">Edit Profile</div>
+            <div class="section-card-body">
+              <div class="grid-2" style="gap:12px;margin-bottom:12px;">
+                <div class="field-group"><div class="field-label">Full Name</div><input class="input" value="Kofi Osei"></div>
+                <div class="field-group"><div class="field-label">Username</div><input class="input" value="swift_trader_492"></div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="showToast('Profile updated','success')">Save Changes</button>
+            </div>
+          </div>
+          <div class="section-card" style="margin-bottom:16px;">
+            <div class="section-card-title">Two-Factor Authentication</div>
+            <div class="section-card-body" style="display:flex;align-items:center;justify-content:space-between;">
+              <div><div style="font-size:13px;color:var(--tp);font-weight:500;">2FA Status</div><div style="font-size:12px;color:var(--tm);margin-top:2px;">Protect your account with TOTP</div></div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span class="chip chip-buy">Enabled</span>
+                <button class="btn btn-secondary btn-sm" onclick="show2FAModal()">Manage</button>
+              </div>
+            </div>
+          </div>
+          <div class="section-card" style="margin-bottom:16px;">
+            <div class="section-card-title">Active Sessions</div>
+            <div class="tbl-wrap" style="margin:12px;">
+              <table class="tbl">
+                <thead><tr><th>Device</th><th>IP</th><th>Location</th><th>Last Active</th><th class="right">Actions</th></tr></thead>
+                <tbody>
+                  <tr><td class="text-pri">Chrome / Windows <span class="chip chip-acc" style="font-size:9px;margin-left:4px;">Current</span></td><td class="mono" style="font-size:11px;">41.88.142.xxx</td><td style="font-size:11px;">Accra, GH</td><td style="font-size:11px;color:var(--tm);">Now</td><td class="right"><button class="btn btn-ghost btn-sm" style="color:var(--tm);cursor:default;">–</button></td></tr>
+                  <tr><td>Chrome / Android</td><td class="mono" style="font-size:11px;">41.88.142.xxx</td><td style="font-size:11px;">Accra, GH</td><td style="font-size:11px;color:var(--tm);">2h ago</td><td class="right"><button class="btn btn-danger btn-sm" onclick="showToast('Session revoked','err')">Revoke</button></td></tr>
+                  <tr><td>Firefox / macOS</td><td class="mono" style="font-size:11px;">102.17.8.xxx</td><td style="font-size:11px;">Tema, GH</td><td style="font-size:11px;color:var(--tm);">3 days ago</td><td class="right"><button class="btn btn-danger btn-sm" onclick="showToast('Session revoked','err')">Revoke</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-card-title">Login History</div>
+            <div class="tbl-wrap" style="margin:12px;">
+              <table class="tbl">
+                <thead><tr><th>Date</th><th>Device</th><th>IP</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td style="font-size:11px;font-family:var(--mono);">2025-03-21 09:14</td><td style="font-size:11px;">Chrome / Windows</td><td class="mono" style="font-size:11px;">41.88.142.xxx</td><td><span class="chip chip-buy" style="font-size:9px;">SUCCESS</span></td></tr>
+                  <tr><td style="font-size:11px;font-family:var(--mono);">2025-03-20 18:32</td><td style="font-size:11px;">Chrome / Android</td><td class="mono" style="font-size:11px;">41.88.142.xxx</td><td><span class="chip chip-buy" style="font-size:9px;">SUCCESS</span></td></tr>
+                  <tr><td style="font-size:11px;font-family:var(--mono);">2025-03-19 08:05</td><td style="font-size:11px;">Unknown</td><td class="mono" style="font-size:11px;">196.41.xx.xxx</td><td><span class="chip chip-sell" style="font-size:9px;">FAILED</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SETTINGS ── -->
+      <div class="page" id="page-settings">
+        <div class="page-pad">
+          <div class="settings-section">
+            <div class="settings-title">Appearance</div>
+            <div class="section-card">
+              <div class="section-card-body" style="display:flex;align-items:center;justify-content:space-between;">
+                <div><div style="font-size:13px;font-weight:500;color:var(--tp);">Theme</div><div style="font-size:12px;color:var(--tm);margin-top:2px;">Controls the app color scheme</div></div>
+                <div class="seg-ctrl">
+                  <div class="seg-opt" onclick="setSeg(this)">System</div>
+                  <div class="seg-opt active" onclick="setSeg(this)">Dark</div>
+                  <div class="seg-opt" onclick="setSeg(this)">Light</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-title">MT5 Accounts</div>
+            <div class="section-card">
+              <div class="acct-row">
+                <div class="acct-dot" style="width:8px;height:8px;flex-shrink:0;"></div>
+                <div style="flex:1;"><div style="font-size:13px;font-weight:500;color:var(--tp);">Exness #12345678</div><div style="font-size:11px;color:var(--tm);">Exness · MT5 Real</div></div>
+                <span class="chip chip-buy" style="font-size:9px;">ACTIVE</span>
+                <button class="btn btn-ghost btn-sm" onclick="showToast('Rename account','info')">Rename</button>
+                <button class="btn btn-danger btn-sm" onclick="showToast('Account removed','err')">Remove</button>
+              </div>
+              <div class="acct-row">
+                <div style="width:8px;height:8px;border-radius:50%;background:var(--amb);flex-shrink:0;"></div>
+                <div style="flex:1;"><div style="font-size:13px;font-weight:500;color:var(--tp);">Deriv #98765432</div><div style="font-size:11px;color:var(--tm);">Deriv · MT5 Demo</div></div>
+                <button class="btn btn-secondary btn-sm" onclick="showToast('Account activated','success')">Set Active</button>
+                <button class="btn btn-danger btn-sm" onclick="showToast('Account removed','err')">Remove</button>
+              </div>
+              <div class="acct-row" style="border-top:1px solid var(--bd);">
+                <button class="btn btn-secondary btn-sm" onclick="showToast('Add account flow','info')">
+                  <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 2v6M2 5h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  Add Account
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-title">Notifications</div>
+            <div class="section-card">
+              <div class="notif-row"><span style="font-size:13px;color:var(--tp);">Trade Opened</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div class="notif-row"><span style="font-size:13px;color:var(--tp);">Trade Closed</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div class="notif-row"><span style="font-size:13px;color:var(--tp);">Alert Triggered</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div class="notif-row"><span style="font-size:13px;color:var(--tp);">Daily Summary</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-title">Chart Defaults</div>
+            <div class="section-card card-body-sm">
+              <div class="grid-2" style="gap:12px;">
+                <div class="field-group"><div class="field-label">Default Timeframe</div><select class="input"><option>H1</option><option>M15</option><option>H4</option><option>D1</option></select></div>
+                <div class="field-group"><div class="field-label">Default Indicators</div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+                    <span class="chip chip-acc" style="cursor:pointer;" onclick="this.classList.toggle('chip-acc');this.classList.toggle('chip-neu')">MA</span>
+                    <span class="chip chip-neu" style="cursor:pointer;" onclick="this.classList.toggle('chip-acc');this.classList.toggle('chip-neu')">EMA</span>
+                    <span class="chip chip-neu" style="cursor:pointer;" onclick="this.classList.toggle('chip-acc');this.classList.toggle('chip-neu')">BB</span>
+                    <span class="chip chip-neu" style="cursor:pointer;" onclick="this.classList.toggle('chip-acc');this.classList.toggle('chip-neu')">RSI</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-title">Data Export</div>
+            <div class="section-card card-body-sm">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-secondary btn-sm" onclick="showToast('Downloading trade history CSV...','info')">
+                  <svg width="11" height="11" viewBox="0 0 11 11"><path d="M5.5 1v6M2 8l3.5 2.5L9 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                  History CSV
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="showToast('Generating PDF report...','info')">
+                  <svg width="11" height="11" viewBox="0 0 11 11"><path d="M5.5 1v6M2 8l3.5 2.5L9 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                  History PDF
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="showToast('Generating analytics PDF...','info')">
+                  <svg width="11" height="11" viewBox="0 0 11 11"><path d="M5.5 1v6M2 8l3.5 2.5L9 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                  Analytics PDF
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="showToast('Exporting calendar image...','info')">
+                  <svg width="11" height="11" viewBox="0 0 11 11"><path d="M5.5 1v6M2 8l3.5 2.5L9 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                  Calendar PNG
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-title">Keyboard Shortcuts</div>
+            <div class="section-card">
+              <div class="kbd-row"><span style="color:var(--ts);">Command palette</span><span class="kbd-tag">⌘K</span></div>
+              <div class="kbd-row"><span style="color:var(--ts);">Go to Watchlist</span><span class="kbd-tag">G H</span></div>
+              <div class="kbd-row"><span style="color:var(--ts);">Go to Hub</span><span class="kbd-tag">G U</span></div>
+              <div class="kbd-row"><span style="color:var(--ts);">Go to Chart</span><span class="kbd-tag">G C</span></div>
+              <div class="kbd-row"><span style="color:var(--ts);">Go to History</span><span class="kbd-tag">G T</span></div>
+              <div class="kbd-row"><span style="color:var(--ts);">Go to Analytics</span><span class="kbd-tag">G A</span></div>
+              <div class="kbd-row"><span style="color:var(--ts);">Go to Calendar</span><span class="kbd-tag">G L</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 404 ── -->
+      <div class="page" id="page-404">
+        <div class="error-page">
+          <div class="error-code">404</div>
+          <div class="error-msg">Page not found</div>
+          <div class="error-sub">The page you're looking for doesn't exist.</div>
+          <button class="btn btn-primary" onclick="nav('home')">Back to Watchlist</button>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+
+  <!-- Floating P&L -->
+  <div id="floating-pl">
+    <div>
+      <div class="fl-label">Today</div>
+      <div class="fl-val pos">+$142.80</div>
+    </div>
+  </div>
+
+  <!-- Mobile bottom nav -->
+  <div id="bottom-nav">
+    <div class="bn-item active" onclick="nav('home')"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 6.5L8 2l6 4.5V14h-4v-4H6v4H2V6.5z"/></svg><span>Home</span></div>
+    <div class="bn-item" onclick="nav('hub')"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="2"/><path d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 1.5a4.5 4.5 0 110 9 4.5 4.5 0 010-9z"/></svg><span>Hub</span></div>
+    <div class="bn-item" onclick="nav('chart')"><svg viewBox="0 0 16 16" fill="none"><polyline points="2,12 5.5,8 8.5,10.5 12,5 14,6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Chart</span></div>
+    <div class="bn-item" onclick="nav('history')"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="3" width="12" height="1.5" rx=".75"/><rect x="2" y="7" width="12" height="1.5" rx=".75"/><rect x="2" y="11" width="8" height="1.5" rx=".75"/></svg><span>History</span></div>
+    <div class="bn-item" onclick="toggleMoreDrawer()" id="bn-more"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="4" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="12" cy="8" r="1.5"/></svg><span>More</span></div>
+  </div>
+
+  <!-- Mobile More Drawer -->
+  <div id="more-drawer-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;" onclick="closeMoreDrawer()"></div>
+  <div id="more-drawer" style="display:none;position:fixed;bottom:60px;left:0;right:0;background:var(--s2);border-top:1px solid var(--bd);border-radius:12px 12px 0 0;z-index:160;padding:8px 0 16px;animation:slideUp .22s ease;">
+    <div style="width:36px;height:4px;background:var(--bd);border-radius:2px;margin:8px auto 16px;"></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;">
+      <div onclick="nav('analytics');closeMoreDrawer();" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;cursor:pointer;color:var(--tm);">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="9" width="3" height="5" rx="1"/><rect x="6.5" y="6" width="3" height="8" rx="1"/><rect x="11" y="3" width="3" height="11" rx="1"/></svg>
+        <span style="font-size:11px;font-weight:500;">Analytics</span>
+      </div>
+      <div onclick="nav('calendar');closeMoreDrawer();" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;cursor:pointer;color:var(--tm);">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M2 7h12M5 2v2M11 2v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span style="font-size:11px;font-weight:500;">Calendar</span>
+      </div>
+      <div onclick="nav('alerts');closeMoreDrawer();" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;cursor:pointer;color:var(--tm);">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a4.5 4.5 0 014.5 4.5v3l1 1.5H2.5l1-1.5V5.5A4.5 4.5 0 018 1zm0 13.5a1.5 1.5 0 01-1.5-1.5h3A1.5 1.5 0 018 14.5z"/></svg>
+        <span style="font-size:11px;font-weight:500;">Alerts</span>
+      </div>
+      <div onclick="nav('profile');closeMoreDrawer();" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;cursor:pointer;color:var(--tm);">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span style="font-size:11px;font-weight:500;">Profile</span>
+      </div>
+      <div onclick="nav('settings');closeMoreDrawer();" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;cursor:pointer;color:var(--tm);">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="none"><path d="M8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" stroke="currentColor" stroke-width="1.3"/><path d="M13.5 8a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z" stroke="currentColor" stroke-width="1.3"/></svg>
+        <span style="font-size:11px;font-weight:500;">Settings</span>
+      </div>
+      <div onclick="nav('symbol');closeMoreDrawer();" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;cursor:pointer;color:var(--tm);">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 5.5v4M8 11h.01" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span style="font-size:11px;font-weight:500;">Symbol Info</span>
+      </div>
+    </div>
+
+</div><!-- /app -->
+
+<!-- ── MODALS & OVERLAYS ── -->
+<div id="new-order-modal" style="display:none;">
+  <div class="modal-overlay" onclick="if(event.target===this)hideNewOrder()">
+    <div class="modal">
+      <div class="modal-title">New Order</div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="field-group"><div class="field-label">Symbol</div><input class="input" placeholder="EURUSD" value="EURUSD"></div>
+        <div class="grid-2" style="gap:10px;">
+          <div class="field-group"><div class="field-label">Order Type</div><select class="input"><option>Buy Market</option><option>Sell Market</option><option>Buy Limit</option><option>Sell Limit</option><option>Buy Stop</option><option>Sell Stop</option></select></div>
+          <div class="field-group"><div class="field-label">Volume (Lots)</div><input class="input mono" value="0.10"></div>
+        </div>
+        <div class="grid-2" style="gap:10px;">
+          <div class="field-group"><div class="field-label">Stop Loss</div><input class="input mono" placeholder="e.g. 1.08100"></div>
+          <div class="field-group"><div class="field-label">Take Profit</div><input class="input mono" placeholder="e.g. 1.09000"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="hideNewOrder()">Cancel</button>
+        <button class="btn btn-primary" onclick="hideNewOrder();showToast('Order placed successfully','success')">Place Order</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="alert-modal" style="display:none;">
+  <div class="modal-overlay" onclick="if(event.target===this)hideAlertModal()">
+    <div class="modal">
+      <div class="modal-title">Create Alert</div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="field-group">
+          <div class="field-label">Alert Type</div>
+          <div class="seg-ctrl">
+            <div class="seg-opt active" onclick="setAlertType(this,'price')">Price</div>
+            <div class="seg-opt" onclick="setAlertType(this,'drawdown')">Drawdown</div>
+            <div class="seg-opt" onclick="setAlertType(this,'goal')">Daily Goal</div>
+          </div>
+        </div>
+        <div id="alert-fields-price">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="field-group"><div class="field-label">Symbol</div><input class="input" placeholder="e.g. EURUSD"></div>
+            <div class="grid-2" style="gap:10px;">
+              <div class="field-group"><div class="field-label">Condition</div><select class="input"><option>Above</option><option>Below</option></select></div>
+              <div class="field-group"><div class="field-label">Price</div><input class="input mono" placeholder="1.09500"></div>
+            </div>
+          </div>
+        </div>
+        <div id="alert-fields-drawdown" style="display:none">
+          <div class="field-group"><div class="field-label">Drawdown %</div><input class="input mono" value="75"></div>
+        </div>
+        <div id="alert-fields-goal" style="display:none">
+          <div class="grid-2" style="gap:10px;">
+            <div class="field-group"><div class="field-label">Profit Target</div><input class="input mono" placeholder="$200"></div>
+            <div class="field-group"><div class="field-label">Max Loss</div><input class="input mono" placeholder="-$100"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="hideAlertModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="hideAlertModal();showToast('Alert created','success')">Create Alert</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="twofa-modal" style="display:none;">
+  <div class="modal-overlay" onclick="if(event.target===this)hide2FAModal()">
+    <div class="modal">
+      <div class="modal-title">Two-Factor Authentication</div>
+      <div style="text-align:center;padding:10px 0;">
+        <div style="width:140px;height:140px;background:white;border-radius:8px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
+          <svg width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="white"/><rect x="10" y="10" width="40" height="40" fill="none" stroke="black" stroke-width="4"/><rect x="18" y="18" width="24" height="24" fill="black"/><rect x="70" y="10" width="40" height="40" fill="none" stroke="black" stroke-width="4"/><rect x="78" y="18" width="24" height="24" fill="black"/><rect x="10" y="70" width="40" height="40" fill="none" stroke="black" stroke-width="4"/><rect x="18" y="78" width="24" height="24" fill="black"/><rect x="70" y="70" width="8" height="8" fill="black"/><rect x="84" y="70" width="8" height="8" fill="black"/><rect x="70" y="84" width="8" height="8" fill="black"/><rect x="84" y="84" width="8" height="8" fill="black"/><rect x="98" y="84" width="8" height="8" fill="black"/><rect x="98" y="70" width="8" height="8" fill="black"/></svg>
+        </div>
+        <div style="font-size:12px;color:var(--tm);margin-bottom:8px;">Scan with your authenticator app</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--ts);background:var(--s2);padding:8px;border-radius:var(--r-sm);margin-bottom:16px;">JBSWY3DPEHPK3PXP</div>
+        <div class="otp-wrap">
+          <input class="otp-input" maxlength="1" oninput="focusNext(this)">
+          <input class="otp-input" maxlength="1" oninput="focusNext(this)">
+          <input class="otp-input" maxlength="1" oninput="focusNext(this)">
+          <input class="otp-input" maxlength="1" oninput="focusNext(this)">
+          <input class="otp-input" maxlength="1" oninput="focusNext(this)">
+          <input class="otp-input" maxlength="1" oninput="focusNext(this)">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="hide2FAModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="hide2FAModal();showToast('2FA verified and enabled','success')">Verify & Enable</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search Overlay -->
+<div id="search-overlay" style="display:none;">
+  <div class="search-overlay" onclick="if(event.target===this)hideSearchOverlay()">
+    <div class="search-box">
+      <div class="search-input-wrap">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="var(--tm)" stroke-width="1.3"/><line x1="10.5" y1="10.5" x2="14" y2="14" stroke="var(--tm)" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <input class="search-input" placeholder="Search symbols..." autofocus id="search-input" oninput="filterSearch(this.value)">
+        <span style="font-size:11px;color:var(--tm);">ESC to close</span>
+      </div>
+      <div id="search-results">
+        <div class="search-result" onclick="selectSymbol('EURUSD')"><div><div style="font-weight:600;font-family:var(--mono);color:var(--tp);">EURUSD</div><div style="font-size:11px;color:var(--tm);">Euro vs US Dollar</div></div><button class="btn btn-secondary btn-sm">Add</button></div>
+        <div class="search-result" onclick="selectSymbol('GBPUSD')"><div><div style="font-weight:600;font-family:var(--mono);color:var(--tp);">GBPUSD</div><div style="font-size:11px;color:var(--tm);">British Pound vs US Dollar</div></div><button class="btn btn-secondary btn-sm">Add</button></div>
+        <div class="search-result" onclick="selectSymbol('XAUUSD')"><div><div style="font-weight:600;font-family:var(--mono);color:var(--tp);">XAUUSD</div><div style="font-size:11px;color:var(--tm);">Gold vs US Dollar</div></div><span class="chip chip-buy" style="font-size:9px;">Added</span></div>
+        <div class="search-result" onclick="selectSymbol('USDJPY')"><div><div style="font-weight:600;font-family:var(--mono);color:var(--tp);">USDJPY</div><div style="font-size:11px;color:var(--tm);">US Dollar vs Japanese Yen</div></div><button class="btn btn-secondary btn-sm">Add</button></div>
+        <div class="search-result" onclick="selectSymbol('GBPJPY')"><div><div style="font-weight:600;font-family:var(--mono);color:var(--tp);">GBPJPY</div><div style="font-size:11px;color:var(--tm);">British Pound vs Japanese Yen</div></div><button class="btn btn-secondary btn-sm">Add</button></div>
+        <div class="search-result" onclick="selectSymbol('NASDAQ')"><div><div style="font-weight:600;font-family:var(--mono);color:var(--tp);">NAS100</div><div style="font-size:11px;color:var(--tm);">Nasdaq 100 Index</div></div><button class="btn btn-secondary btn-sm">Add</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Command Palette -->
+<div id="cmd-palette" style="display:none;">
+  <div class="search-overlay" onclick="if(event.target===this)hideCmdPalette()">
+    <div class="search-box">
+      <div class="search-input-wrap">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 2L3 6h3l-1 6 7-8H9l1-6-4 4z" stroke="var(--tm)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <input class="search-input" placeholder="Type a command or search..." autofocus>
+        <span style="font-size:11px;color:var(--tm);">ESC</span>
+      </div>
+      <div style="padding:4px 0;">
+        <div style="padding:4px 16px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);">Navigation</div>
+        <div class="search-result" onclick="nav('home');hideCmdPalette()"><span style="color:var(--ts);">Go to Watchlist</span><span class="kbd-tag">G H</span></div>
+        <div class="search-result" onclick="nav('hub');hideCmdPalette()"><span style="color:var(--ts);">Go to Hub</span><span class="kbd-tag">G U</span></div>
+        <div class="search-result" onclick="nav('chart');hideCmdPalette()"><span style="color:var(--ts);">Go to Chart</span><span class="kbd-tag">G C</span></div>
+        <div class="search-result" onclick="nav('analytics');hideCmdPalette()"><span style="color:var(--ts);">Go to Analytics</span><span class="kbd-tag">G A</span></div>
+        <div style="padding:4px 16px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);margin-top:4px;">Accounts</div>
+        <div class="search-result" onclick="showToast('Switched to Exness #12345678','success');hideCmdPalette()"><div style="display:flex;align-items:center;gap:8px;"><span class="acct-dot"></span><span style="color:var(--ts);">Exness #12345678</span><span class="chip chip-buy" style="font-size:9px;">Active</span></div></div>
+        <div class="search-result" onclick="showToast('Switched to Deriv #98765432','success');hideCmdPalette()"><div style="display:flex;align-items:center;gap:8px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--amb);display:inline-block;"></span><span style="color:var(--ts);">Deriv #98765432</span></div></div>
+        <div style="padding:4px 16px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);margin-top:4px;">Symbols</div>
+        <div class="search-result" onclick="nav('chart');hideCmdPalette()"><span class="mono" style="color:var(--tp);">EURUSD</span><span style="font-size:11px;color:var(--tm);">Open Chart</span></div>
+        <div class="search-result" onclick="nav('chart');hideCmdPalette()"><span class="mono" style="color:var(--tp);">XAUUSD</span><span style="font-size:11px;color:var(--tm);">Open Chart</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+const watchlistData = [
+  {sym:'EURUSD',desc:'Euro vs US Dollar',bid:'1.08534',ask:'1.08537',chg:'+0.12%',pos:true},
+  {sym:'XAUUSD',desc:'Gold vs US Dollar',bid:'2341.80',ask:'2342.20',chg:'+0.34%',pos:true},
+  {sym:'GBPJPY',desc:'British Pound vs Japanese Yen',bid:'191.320',ask:'191.350',chg:'-0.21%',pos:false},
+  {sym:'USDJPY',desc:'US Dollar vs Japanese Yen',bid:'148.420',ask:'148.440',chg:'+0.08%',pos:true},
+  {sym:'BTCUSD',desc:'Bitcoin vs US Dollar',bid:'68,420.00',ask:'68,450.00',chg:'+1.82%',pos:true},
+];
+const positionsData = [
+  {ticket:'10847225',sym:'EURUSD',type:'buy',vol:'0.50',open:'1.08412',cur:'1.08534',sl:'1.08100',tp:'1.09000',profit:'+$61.00',pos:true},
+  {ticket:'10847198',sym:'GBPJPY',type:'sell',vol:'0.10',open:'191.250',cur:'191.320',sl:'192.000',tp:'189.500',profit:'+$103.40',pos:true},
+  {ticket:'10847141',sym:'XAUUSD',type:'buy',vol:'0.05',open:'2341.80',cur:'2336.50',sl:'2320.00',tp:'2380.00',profit:'-$26.50',pos:false},
+];
+const historyData = [
+  {ticket:'10847221',sym:'EURUSD',type:'buy',vol:'0.50',open:'1.08250',close:'1.08372',ot:'2025-03-18 09:14',ct:'2025-03-18 14:42',profit:'+$61.00',pos:true},
+  {ticket:'10847185',sym:'XAUUSD',type:'sell',vol:'0.10',open:'2345.00',close:'2331.50',ot:'2025-03-17 15:30',ct:'2025-03-17 18:22',profit:'+$135.00',pos:true},
+  {ticket:'10847163',sym:'GBPUSD',type:'buy',vol:'0.20',open:'1.27500',close:'1.27340',ot:'2025-03-17 09:00',ct:'2025-03-17 11:14',profit:'-$32.00',pos:false},
+  {ticket:'10847122',sym:'USDJPY',type:'sell',vol:'0.30',open:'148.800',close:'148.540',ot:'2025-03-16 13:45',ct:'2025-03-16 17:30',profit:'+$52.70',pos:true},
+  {ticket:'10847099',sym:'EURUSD',type:'sell',vol:'0.25',open:'1.08740',close:'1.08920',ot:'2025-03-15 10:10',ct:'2025-03-15 12:55',profit:'-$45.00',pos:false},
+  {ticket:'10847071',sym:'XAUUSD',type:'buy',vol:'0.05',open:'2325.00',close:'2338.50',ot:'2025-03-14 08:00',ct:'2025-03-14 16:40',profit:'+$67.50',pos:true},
+];
+const calData = {
+  1:{pnl:'+$142.80',pos:true,trades:3},3:{pnl:'+$85.20',pos:true,trades:2},4:{pnl:'-$42.00',pos:false,trades:2},
+  5:{pnl:'+$230.40',pos:true,trades:5},7:{pnl:'+$68.90',pos:true,trades:2},10:{pnl:'-$28.50',pos:false,trades:1},
+  11:{pnl:'+$195.00',pos:true,trades:4},12:{pnl:'+$52.30',pos:true,trades:2},14:{pnl:'-$18.70',pos:false,trades:1},
+  17:{pnl:'+$103.40',pos:true,trades:3},18:{pnl:'+$83.70',pos:true,trades:2},19:{pnl:'-$55.20',pos:false,trades:2},
+  21:{pnl:'+$142.80',pos:true,trades:3},
+};
+
+// ── NAV ──
+// NOTE for React build: replace this nav() function with React Router's useNavigate() hook.
+// Every nav('page') call becomes navigate('/page'). Never use window.location.href.
+// Use <Link to="/page"> for static links, useNavigate() for programmatic navigation.
+const pageTitles = {home:'Watchlist',hub:'Hub',chart:'Chart',history:'History',detail:'Trade Detail',calendar:'Calendar P&L',analytics:'Analytics',alerts:'Alerts',profile:'Profile',settings:'Settings',symbol:'Symbol Info','404':'Not Found'};
+let currentPage = 'home';
+// page → which sidebar nav item should be active
+const navParent = {
+  home:'home', hub:'hub', chart:'chart', history:'history', detail:'history',
+  analytics:'analytics', calendar:'calendar', alerts:'alerts',
+  profile:'profile', settings:'settings', symbol:'home', '404':null
+};
+// page → which bottom nav item should be active (only 4 main tabs)
+const bnParent = {
+  home:'home', hub:'hub', chart:'chart', history:'history', detail:'history',
+  symbol:'home', analytics:null, calendar:null, alerts:null, profile:null, settings:null
+};
+
+function nav(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.bn-item').forEach(n=>n.classList.remove('active'));
+
+  const p = document.getElementById('page-'+page);
+  if(p){p.classList.add('active');currentPage=page;}
+
+  // sidebar active
+  const parentPage = navParent[page];
+  if(parentPage){
+    const n = document.getElementById('nav-'+parentPage);
+    if(n) n.classList.add('active');
+  }
+
+  // bottom nav active — highlight More tab for secondary pages
+  const bnPage = bnParent[page];
+  if(bnPage){
+    const bnItems = document.querySelectorAll('.bn-item');
+    const bnMap = {home:0,hub:1,chart:2,history:3};
+    const idx = bnMap[bnPage];
+    if(idx!==undefined && bnItems[idx]) bnItems[idx].classList.add('active');
+  } else if(morePages && morePages.has(page)){
+    const moreBtn = document.getElementById('bn-more');
+    if(moreBtn) moreBtn.classList.add('active');
+  }
+
+  document.getElementById('page-title').textContent = pageTitles[page]||page;
+
+  // init page-specific rendering
+  if(page==='home') renderWatchlist();
+  if(page==='hub') renderPositions();
+  if(page==='history'){ renderHistory(); setTimeout(checkHistoryOverflow, 50); }
+  if(page==='detail') setTimeout(renderMiniChart, 50);
+  if(page==='calendar') renderCalendar();
+  if(page==='chart') renderChart();
+}
+
+// ── WATCHLIST ──
+let expandedSym = null;
+function renderWatchlist(){
+  const el = document.getElementById('watchlist');
+  if(!el) return;
+  el.innerHTML = watchlistData.map((s,i)=>`
+    <div class="symbol-row" id="sym-row-${i}">
+      <div class="symbol-main" onclick="toggleSymRow(${i})">
+        <div class="sym-info">
+          <div class="sym-name">${s.sym}</div>
+          <div class="sym-desc">${s.desc}</div>
+        </div>
+        <div class="sym-price">
+          <div class="sym-bid mono" id="bid-${i}">${s.bid}</div>
+          <div style="margin-top:3px;text-align:right;">
+            <span class="chip ${s.pos?'chip-buy':'chip-sell'}">${s.chg}</span>
+          </div>
+        </div>
+      </div>
+      <div class="sym-actions" id="sym-actions-${i}" style="display:none;">
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();nav('chart')">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="1,9 3.5,6 5.5,7.5 8,4 10,5.5" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Open Chart
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();nav('symbol')">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 4.5v4M5.5 3h.01" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Symbol Info
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="removeSymbol(${i})">Remove</button>
+      </div>
+    </div>
+  `).join('');
+  // live ticking simulation
+  startLivePrices();
+}
+function toggleSymRow(i){
+  const actions = document.getElementById('sym-actions-'+i);
+  if(!actions) return;
+  const open = actions.style.display!=='none';
+  document.querySelectorAll('[id^="sym-actions-"]').forEach(a=>a.style.display='none');
+  if(!open) actions.style.display='flex';
+}
+function removeSymbol(i){
+  watchlistData.splice(i,1);
+  renderWatchlist();
+  showToast('Symbol removed','info');
+}
+let priceInterval;
+function startLivePrices(){
+  clearInterval(priceInterval);
+  priceInterval = setInterval(()=>{
+    watchlistData.forEach((s,i)=>{
+      const el = document.getElementById('bid-'+i);
+      if(!el) return;
+      // simulate small tick
+      const digits = s.sym==='BTCUSD'?2:s.bid.includes('.')?s.bid.split('.')[1].length:2;
+      const num = parseFloat(s.bid.replace(',',''));
+      const delta = (Math.random()-0.48)*(digits>4?0.0001:digits>2?0.01:1);
+      const newBid = (num+delta).toFixed(digits);
+      s.bid = s.sym==='BTCUSD'?parseFloat(newBid).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}):newBid;
+      el.textContent = s.bid;
+      el.style.animation='none';
+      void el.offsetWidth;
+      el.style.animation='flash-grn .3s ease';
+    });
+  },1200);
+}
+
+// ── POSITIONS ──
+function renderPositions(){
+  const el = document.getElementById('positions-body');
+  if(!el) return;
+  el.innerHTML = positionsData.map((p,i)=>`
+    <tr onclick="toggleModify(${i})" id="pos-row-${i}">
+      <td class="text-pri mono" style="font-weight:600;white-space:nowrap">${p.sym}</td>
+      <td style="white-space:nowrap"><span class="chip ${p.type==='buy'?'chip-buy':'chip-sell'}">${p.type.toUpperCase()}</span></td>
+      <td class="mono" style="white-space:nowrap">${p.vol}</td>
+      <td class="mono" style="white-space:nowrap">${p.open}</td>
+      <td class="mono text-pri" style="white-space:nowrap">${p.cur}</td>
+      <td class="mono text-mut" style="white-space:nowrap">${p.sl}</td>
+      <td class="mono text-mut" style="white-space:nowrap">${p.tp}</td>
+      <td class="right mono ${p.pos?'pos':'neg'}" style="font-weight:700;white-space:nowrap;position:sticky;right:60px;z-index:1;background:${i%2===0?'rgba(8,8,16,.5)':'rgba(14,14,26,.5)'}">${p.profit}</td>
+      <td class="right" style="position:sticky;right:0;z-index:1;background:${i%2===0?'rgba(8,8,16,.5)':'rgba(14,14,26,.5)'}"><div class="act-cell">
+        <button class="btn-icon" onclick="event.stopPropagation();toggleModify(${i})" title="Modify"><svg viewBox="0 0 12 12" fill="none"><path d="M1 11l2-2 6-6-2-2-6 6-2 2 2 2z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+        <button class="btn-icon danger" onclick="event.stopPropagation();closePosition(${i})" title="Close"><svg viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+      </div></td>
+    </tr>
+    <tr id="modify-row-${i}" style="display:none;">
+      <td colspan="9" style="padding:10px 16px;background:var(--s2);">
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+          <div class="field-group"><div class="field-label">New SL</div><input class="input mono" style="width:120px" value="${p.sl}"></div>
+          <div class="field-group"><div class="field-label">New TP</div><input class="input mono" style="width:120px" value="${p.tp}"></div>
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();showToast('Position modified','success');closeModify(${i})">Save</button>
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();closeModify(${i})">Cancel</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+let openModify = null;
+function toggleModify(i){
+  const row = document.getElementById('modify-row-'+i);
+  if(!row) return;
+  const open = row.style.display!=='none';
+  document.querySelectorAll('[id^="modify-row-"]').forEach(r=>r.style.display='none');
+  if(!open) row.style.display='table-row';
+  openModify = open?null:i;
+}
+function closeModify(i){document.getElementById('modify-row-'+i).style.display='none';}
+function closePosition(i){
+  positionsData.splice(i,1);
+  renderPositions();
+  showToast('Position closed','success');
+}
+
+// ── HISTORY ──
+let expandedRow = null;
+const stickyProfit = 'position:sticky;right:0;z-index:1;';
+function renderHistory(){
+  const el = document.getElementById('history-body');
+  if(!el) return;
+  el.innerHTML = historyData.map((h,i)=>`
+    <tr onclick="toggleHistoryRow(${i})" id="hist-row-${i}">
+      <td class="mono text-mut" style="font-size:10px;white-space:nowrap;">${h.ticket}</td>
+      <td class="text-pri mono" style="font-weight:600;white-space:nowrap;">${h.sym}</td>
+      <td style="white-space:nowrap;"><span class="chip ${h.type==='buy'?'chip-buy':'chip-sell'}">${h.type.toUpperCase()}</span></td>
+      <td class="mono" style="white-space:nowrap;">${h.vol}</td>
+      <td class="mono" style="white-space:nowrap;">${h.open}</td>
+      <td class="mono" style="white-space:nowrap;">${h.close}</td>
+      <td style="font-size:11px;color:var(--tm);white-space:nowrap;">${h.ot}</td>
+      <td style="font-size:11px;color:var(--tm);white-space:nowrap;">${h.ct}</td>
+      <td class="right mono ${h.pos?'pos':'neg'}" style="font-weight:700;white-space:nowrap;${stickyProfit}background:${i%2===0?'#0D0D1A':'#111120'}">${h.profit}</td>
+    </tr>
+    <tr id="hist-preview-${i}" style="display:none;" class="preview-row">
+      <td colspan="9" style="padding:0;${stickyProfit}">
+        <div class="preview-content">
+          <div class="preview-stat"><div class="preview-stat-lbl">Duration</div><div class="preview-stat-val">5h 27m</div></div>
+          <div class="preview-stat"><div class="preview-stat-lbl">Commission</div><div class="preview-stat-val text-red">-$3.50</div></div>
+          <div class="preview-stat"><div class="preview-stat-lbl">Swap</div><div class="preview-stat-val text-red">-$0.80</div></div>
+          <div class="preview-stat"><div class="preview-stat-lbl">Net Profit</div><div class="preview-stat-val ${h.pos?'text-grn':'text-red'} mono">${h.profit}</div></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            <span class="tag-chip">trend</span><span class="tag-chip">london</span>
+          </div>
+          <div style="margin-left:auto;">
+            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();nav('detail')">View Full Detail →</button>
+          </div>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+function toggleHistoryRow(i){
+  const row = document.getElementById('hist-preview-'+i);
+  if(!row) return;
+  const open = row.style.display!=='none';
+  document.querySelectorAll('[id^="hist-preview-"]').forEach(r=>r.style.display='none');
+  if(!open) row.style.display='table-row';
+}
+// Show scroll hint if table overflows its container
+function checkHistoryOverflow(){
+  const wrap = document.getElementById('history-tbl-wrap');
+  const hint = document.getElementById('history-scroll-hint');
+  const tbl  = document.getElementById('history-table');
+  if(!wrap||!hint||!tbl) return;
+  hint.style.display = tbl.scrollWidth > wrap.clientWidth ? 'block' : 'none';
+}
+
+// ── MINI CHART (Trade Detail) ──
+function renderMiniChart(){
+  const el = document.getElementById('mini-chart');
+  if(!el) return;
+  const W = el.clientWidth, H = el.clientHeight || 140;
+  // Generate mock candles around the trade window
+  const candles=[];
+  let price=1.08200;
+  for(let i=0;i<32;i++){
+    const o=price;
+    const c=o+(Math.random()-.47)*.0015;
+    const h=Math.max(o,c)+Math.random()*.0006;
+    const l=Math.min(o,c)-Math.random()*.0006;
+    candles.push({o,c,h,l});
+    price=c;
+  }
+  const maxH=Math.max(...candles.map(c=>c.h));
+  const minL=Math.min(...candles.map(c=>c.l));
+  const range=maxH-minL||0.001;
+  const toY=v=>((maxH-v)/range*(H-30)+10);
+  const cw=Math.floor((W-50)/candles.length);
+  let svg=`<svg width="${W}" height="${H}" style="position:absolute;inset:0;">`;
+  // Grid lines
+  for(let i=0;i<4;i++){
+    const y=10+(H-30)*i/3;
+    svg+=`<line x1="0" y1="${y}" x2="${W-50}" y2="${y}" stroke="rgba(30,30,63,.5)" stroke-width=".5"/>`;
+  }
+  candles.forEach((c,i)=>{
+    const x=i*cw+cw/2;
+    const up=c.c>=c.o;
+    const col=up?'#34D399':'#F87171';
+    svg+=`<line x1="${x}" y1="${toY(c.h)}" x2="${x}" y2="${toY(c.l)}" stroke="${col}" stroke-width="1" opacity=".6"/>`;
+    const bodyY=toY(Math.max(c.o,c.c));
+    const bodyH=Math.max(2,Math.abs(toY(c.o)-toY(c.c)));
+    svg+=`<rect x="${x-cw*.35}" y="${bodyY}" width="${cw*.7}" height="${bodyH}" fill="${col}" rx=".5"/>`;
+  });
+  // Entry marker (arrowUp) at candle 8, exit at candle 24
+  const ex=8*cw+cw/2, ey=toY(1.08250);
+  svg+=`<polygon points="${ex},${ey+10} ${ex-5},${ey+18} ${ex+5},${ey+18}" fill="#34D399" opacity=".9"/>`;
+  const cx2=24*cw+cw/2, cy2=toY(1.08372);
+  svg+=`<circle cx="${cx2}" cy="${cy2}" r="4" fill="#818CF8" stroke="#080810" stroke-width="1.5"/>`;
+  // Entry/SL/TP price lines
+  svg+=`<line x1="0" y1="${toY(1.08250)}" x2="${W-50}" y2="${toY(1.08250)}" stroke="#FBBF24" stroke-width=".8" stroke-dasharray="4 3"/>`;
+  svg+=`<line x1="0" y1="${toY(1.07900)}" x2="${W-50}" y2="${toY(1.07900)}" stroke="#F87171" stroke-width=".8" stroke-dasharray="4 3"/>`;
+  svg+=`<line x1="0" y1="${toY(1.08800)}" x2="${W-50}" y2="${toY(1.08800)}" stroke="#34D399" stroke-width=".8" stroke-dasharray="4 3"/>`;
+  // Price axis
+  const prices=[maxH,(maxH+minL)/2,minL];
+  prices.forEach((p,i)=>{
+    const y=10+(H-30)*i/2;
+    svg+=`<text x="${W-46}" y="${y+4}" font-size="8" fill="#475569" font-family="monospace">${p.toFixed(5)}</text>`;
+  });
+  // Time labels
+  svg+=`<text x="8" y="${H-2}" font-size="8" fill="#475569" font-family="monospace">09:00</text>`;
+  svg+=`<text x="${(W-50)/2-16}" y="${H-2}" font-size="8" fill="#475569" font-family="monospace">12:00</text>`;
+  svg+=`<text x="${W-100}" y="${H-2}" font-size="8" fill="#475569" font-family="monospace">15:00</text>`;
+  svg+='</svg>';
+  el.innerHTML=svg;
+}
+function renderChart(){
+  const canvas = document.getElementById('chart-canvas');
+  if(!canvas) return;
+  // Generate fake candles
+  const candles = [];
+  let price = 1.08200;
+  for(let i=0;i<60;i++){
+    const o = price;
+    const c = o + (Math.random()-.48)*.0020;
+    const h = Math.max(o,c) + Math.random()*.0008;
+    const l = Math.min(o,c) - Math.random()*.0008;
+    candles.push({o,c,h,l});
+    price = c;
+  }
+  const maxH = Math.max(...candles.map(c=>c.h));
+  const minL = Math.min(...candles.map(c=>c.l));
+  const range = maxH - minL;
+  const toY = v => 100 - ((v-minL)/range*80+10);
+  // Build SVG
+  const svgW = canvas.clientWidth - 60;
+  const svgH = canvas.clientHeight - 30;
+  const cw = Math.floor(svgW/candles.length);
+  let svg = `<svg style="position:absolute;left:0;top:0;width:calc(100% - 58px);height:calc(100% - 28px)" viewBox="0 0 ${svgW} ${svgH}" preserveAspectRatio="none">`;
+  candles.forEach((c,i)=>{
+    const x = i*cw + cw/2;
+    const up = c.c>=c.o;
+    const color = up?'#34D399':'#F87171';
+    const bodyY = toY(Math.max(c.o,c.c))/100*svgH;
+    const bodyH = Math.max(2,Math.abs(toY(c.o)-toY(c.c))/100*svgH);
+    const wickTop = toY(c.h)/100*svgH;
+    const wickBot = toY(c.l)/100*svgH;
+    svg+=`<line x1="${x}" y1="${wickTop}" x2="${x}" y2="${wickBot}" stroke="${color}" stroke-width="1" opacity=".7"/>`;
+    svg+=`<rect x="${x-cw*.35}" y="${bodyY}" width="${cw*.7}" height="${bodyH}" fill="${color}" rx="0.5"/>`;
+  });
+  // Add MA line
+  const maLen=20;
+  let maPath='';
+  for(let i=maLen;i<candles.length;i++){
+    const avg=candles.slice(i-maLen,i).reduce((s,c)=>s+c.c,0)/maLen;
+    const x=i*cw+cw/2;
+    const y=toY(avg)/100*svgH;
+    maPath+=(i===maLen?`M${x},${y}`:`L${x},${y}`);
+  }
+  if(maPath) svg+=`<path d="${maPath}" fill="none" stroke="#818CF8" stroke-width="1" opacity=".8"/>`;
+  svg+='</svg>';
+  // Price axis
+  const priceAxis = document.getElementById('price-axis');
+  if(priceAxis){
+    const steps=5;
+    priceAxis.innerHTML = Array.from({length:steps},(_,i)=>{
+      const v = maxH - (i/(steps-1))*range;
+      return `<span>${v.toFixed(5)}</span>`;
+    }).join('');
+  }
+  // Time axis
+  const timeAxis = document.getElementById('time-axis');
+  if(timeAxis){
+    const labels=['09:00','10:00','11:00','12:00','13:00','14:00','15:00'];
+    timeAxis.innerHTML = labels.map(l=>`<span>${l}</span>`).join('');
+  }
+  // Insert SVG
+  const existing = canvas.querySelector('svg');
+  if(existing) existing.remove();
+  canvas.insertAdjacentHTML('afterbegin',svg);
+}
+
+// ── CALENDAR ──
+let calYear=2025, calMonth=2; // 0-indexed: 2=March
+const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function changeMonth(d){calMonth+=d;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function renderCalendar(){
+  document.getElementById('cal-month-label').textContent=`${monthNames[calMonth]} ${calYear}`;
+  // Summary strip — compute all values dynamically from calData
+  const sumEl=document.getElementById('cal-summary');
+  const days=Object.values(calData);
+  const totalTrades=days.reduce((s,d)=>s+d.trades,0);
+  const winDays=days.filter(d=>d.pos);
+  const lossDays=days.filter(d=>!d.pos);
+  const winRate=days.length?Math.round(winDays.length/days.length*100):0;
+  const parsePnl=str=>parseFloat(str.replace(/[^0-9.-]/g,''))*(str.startsWith('-')?-1:1);
+  const netPnl=days.reduce((s,d)=>s+parsePnl(d.pnl),0);
+  const bestDay=days.length?days.reduce((best,d)=>parsePnl(d.pnl)>parsePnl(best.pnl)?d:best,days[0]):null;
+  const worstDay=days.length?days.reduce((worst,d)=>parsePnl(d.pnl)<parsePnl(worst.pnl)?d:worst,days[0]):null;
+  const fmtPnl=v=>(v>=0?'+':'')+'\$'+Math.abs(v).toFixed(2);
+  const netPos=netPnl>=0;
+  sumEl.innerHTML=`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm);padding:8px 14px;display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);">Total Trades</span>
+        <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--tp);">${totalTrades}</span>
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm);padding:8px 14px;display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);">Win Rate</span>
+        <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--grn);">${winRate}%</span>
+      </div>
+      <div style="background:var(--s2);border:1px solid ${netPos?'rgba(52,211,153,.2)':'rgba(248,113,113,.2)'};border-radius:var(--r-sm);padding:8px 14px;display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);">Net P&amp;L</span>
+        <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:${netPos?'var(--grn)':'var(--red)'};text-shadow:0 0 8px ${netPos?'rgba(52,211,153,.3)':'rgba(248,113,113,.3)'};">${fmtPnl(netPnl)}</span>
+      </div>
+      <div style="background:rgba(52,211,153,.05);border:1px solid rgba(52,211,153,.15);border-radius:var(--r-sm);padding:8px 14px;display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);">Best Day</span>
+        <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--grn);">${bestDay?fmtPnl(parsePnl(bestDay.pnl)):'—'}</span>
+      </div>
+      <div style="background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.15);border-radius:var(--r-sm);padding:8px 14px;display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);">Worst Day</span>
+        <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--red);">${worstDay?fmtPnl(parsePnl(worstDay.pnl)):'—'}</span>
+      </div>
+    </div>
+  `;
+  // Grid
+  const grid=document.getElementById('cal-grid');
+  const dows=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  let html=dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  const firstDay=new Date(calYear,calMonth,1);
+  const lastDay=new Date(calYear,calMonth+1,0);
+  let startDow=(firstDay.getDay()+6)%7; // Mon=0
+  const today=new Date();
+  const isCurrentMonth=today.getFullYear()===calYear&&today.getMonth()===calMonth;
+  for(let i=0;i<startDow;i++) html+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=lastDay.getDate();d++){
+    const data=calData[d];
+    const isToday=isCurrentMonth&&today.getDate()===d;
+    const cls=data?(data.pos?'profit':'loss'):'';
+    html+=`<div class="cal-day ${cls}${isToday?' today':''}" onclick="showCalPanel(${d})">
+      <div class="cal-date">${d}</div>
+      ${data?`<div class="cal-pnl ${data.pos?'pos':'neg'}">${data.pnl}</div>`:''}
+    </div>`;
+  }
+  const remain=(7-((startDow+lastDay.getDate())%7))%7;
+  for(let i=0;i<remain;i++) html+=`<div class="cal-day empty"></div>`;
+  grid.innerHTML=html;
+}
+function showCalPanel(day){
+  const panel=document.getElementById('cal-panel');
+  const data=calData[day];
+  if(!data){panel.style.display='none';return;}
+  panel.style.display='block';
+  panel.innerHTML=`
+    <div class="cal-panel-header">
+      <div>
+        <div style="font-size:14px;font-weight:600;color:var(--tp);">${monthNames[calMonth]} ${day}, ${calYear}</div>
+        <div class="mono ${data.pos?'text-grn':'text-red'}" style="font-size:16px;font-weight:700;margin-top:2px;">${data.pnl}</div>
+      </div>
+      <button class="btn-icon" onclick="document.getElementById('cal-panel').style.display='none'"><svg viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+    </div>
+    <div style="padding:12px;">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);margin-bottom:8px;">${data.trades} Trades</div>
+      ${[...Array(data.trades)].map((_,i)=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd);">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="chip ${i%3===0?'chip-sell':'chip-buy'}">${i%3===0?'SELL':'BUY'}</span>
+            <span class="mono" style="font-size:12px;color:var(--tp);">EURUSD</span>
+          </div>
+          <span class="mono ${i%3===0?'text-red':'text-grn'}" style="font-weight:600;">${i%3===0?'-$18.40':'+$54.30'}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// ── MODALS ──
+function showNewOrder(){document.getElementById('new-order-modal').style.display='block';}
+function hideNewOrder(){document.getElementById('new-order-modal').style.display='none';}
+function showNewAlert(){document.getElementById('alert-modal').style.display='block';}
+function hideAlertModal(){document.getElementById('alert-modal').style.display='none';}
+function show2FAModal(){document.getElementById('twofa-modal').style.display='block';}
+function hide2FAModal(){document.getElementById('twofa-modal').style.display='none';}
+function showSearchOverlay(){document.getElementById('search-overlay').style.display='block';}
+function hideSearchOverlay(){document.getElementById('search-overlay').style.display='none';}
+function showCmdPalette(){document.getElementById('cmd-palette').style.display='block';}
+function hideCmdPalette(){document.getElementById('cmd-palette').style.display='none';}
+function setAlertType(el,type){
+  document.querySelectorAll('#alert-modal .seg-opt').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('alert-fields-price').style.display=type==='price'?'block':'none';
+  document.getElementById('alert-fields-drawdown').style.display=type==='drawdown'?'block':'none';
+  document.getElementById('alert-fields-goal').style.display=type==='goal'?'block':'none';
+}
+function showTradingForm(dir){
+  document.querySelectorAll('.btn-buy,.btn-sell').forEach(b=>b.style.opacity='.6');
+  document.querySelector(`.btn-${dir}`).style.opacity='1';
+}
+function selectSymbol(sym){hideSearchOverlay();showToast(`${sym} added to watchlist`,'success');}
+function filterSearch(q){}
+function setTF(el){document.querySelectorAll('.tf-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
+function setSeg(el){document.querySelectorAll('.seg-ctrl .seg-opt').forEach(o=>o.classList.remove('active'));el.classList.add('active');showToast('Theme updated','success');}
+function addTagFromInput(input){
+  if(!input.value.trim()) return;
+  const wrap=input.closest('.tag-input-wrap');
+  const chip=document.createElement('span');
+  chip.className='tag-chip';
+  chip.innerHTML=`${input.value.trim()} <span class="tag-remove" onclick="removeTag(event,this)">×</span>`;
+  wrap.insertBefore(chip,input);
+  input.value='';
+  showToast('Tag added','success');
+}
+function removeTag(e,el){e.stopPropagation();el.closest('.tag-chip').remove();}
+function addTag(){}
+function focusNext(input){
+  const inputs=[...document.querySelectorAll('.otp-input')];
+  const idx=inputs.indexOf(input);
+  if(input.value&&idx<inputs.length-1) inputs[idx+1].focus();
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg,type='success'){
+  const existing=document.querySelector('.toast');
+  if(existing) existing.remove();
+  const colors={success:'var(--grn)',warn:'var(--amb)',err:'var(--red)',info:'var(--acc)'};
+  const t=document.createElement('div');
+  t.className='toast';
+  t.style.borderLeft=`3px solid ${colors[type]||colors.success}`;
+  t.innerHTML=`<div class="toast-icon ${type==='err'?'err':type==='warn'?'warn':type==='info'?'':''}" style="background:${colors[type]||colors.success}"></div><span style="font-size:12px;color:var(--ts);">${msg}</span><div class="toast-bar" style="background:${colors[type]||colors.success}"></div>`;
+  document.body.appendChild(t);
+  toastTimer=setTimeout(()=>{if(t.parentNode) t.remove();},3200);
+}
+
+// ── AUTH ──
+function goToApp(){
+  document.getElementById('page-login').style.display='none';
+  const app = document.getElementById('app');
+  app.style.display='flex';
+  nav('home');
+  // detect layout after app is visible
+  applyLayout(app.offsetWidth < 720);
+  ro.observe(app);
+  setTimeout(()=>showToast('Welcome back, Kofi ⚡','success'),400);
+}
+function showRegister(){
+  document.getElementById('page-login').style.display='none';
+  document.getElementById('page-register').style.display='flex';
+}
+function showLogin(){
+  document.getElementById('page-register').style.display='none';
+  document.getElementById('page-login').style.display='flex';
+}
+// onboarding steps
+const obSteps=[null,
+  `<div class="ob-title">Welcome to Ribon7</div><div class="ob-sub">Let's connect your MT5 account in a few steps.</div>
+  <div style="text-align:center;padding:16px 0;">
+    <div style="width:64px;height:64px;background:var(--acd);border-radius:16px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:24px;font-weight:700;color:#fff;margin:0 auto 16px;">R7</div>
+    <div style="font-size:13px;color:var(--tm);max-width:280px;margin:0 auto;">You'll choose a broker, select a terminal, and enter your MT5 credentials. Takes about 2 minutes.</div>
+  </div>`,
+  `<div class="ob-title">Select Broker</div><div class="ob-sub">Choose your broker to see available terminals.</div>
+  <div class="broker-grid">
+    <div class="broker-card selected" onclick="selectBroker(this)"><div class="broker-name">Exness</div><div class="broker-badge"><span>●</span> 2 terminals</div></div>
+    <div class="broker-card" onclick="selectBroker(this)"><div class="broker-name">Deriv</div><div class="broker-badge"><span>●</span> 2 terminals</div></div>
+  </div>`,
+  `<div class="ob-title">Select Terminal</div><div class="ob-sub">Choose which terminal to connect.</div>
+  <div class="terminal-list">
+    <div class="terminal-item selected" onclick="selectTerminal(this)"><div class="terminal-radio"></div><div><div style="font-size:13px;font-weight:500;color:var(--tp);">Exness Terminal 1</div><div style="font-size:11px;color:var(--tm);">C:\\Program Files\\Exness MT5\\terminal64.exe</div></div></div>
+    <div class="terminal-item" onclick="selectTerminal(this)"><div class="terminal-radio"></div><div><div style="font-size:13px;font-weight:500;color:var(--tp);">Exness Terminal 2</div><div style="font-size:11px;color:var(--tm);">C:\\Program Files\\Exness MT5 2\\terminal64.exe</div></div></div>
+  </div>`,
+  `<div class="ob-title">MT5 Credentials</div><div class="ob-sub">Enter your MetaTrader 5 account details.</div>
+  <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px;">
+    <div class="field-group"><div class="field-label">Account Number</div><input class="input mono" placeholder="12345678"></div>
+    <div class="field-group"><div class="field-label">Password</div><input class="input" type="password" placeholder="••••••••"></div>
+    <div class="field-group"><div class="field-label">Server</div><input class="input mono" placeholder="Exness-Real4"></div>
+  </div>`,
+  `<div class="ob-connect" id="ob-connect-anim">
+    <div class="spinner"></div>
+    <div style="color:var(--ts);font-size:14px;">Connecting to MT5...</div>
+  </div>`
+];
+let obStep=1;
+function showOnboarding(){
+  document.getElementById('page-register').style.display='none';
+  document.getElementById('page-onboarding').style.display='flex';
+  renderObStep(1);
+}
+function renderObStep(s){
+  obStep=s;
+  const content=document.getElementById('ob-content');
+  content.innerHTML=(obSteps[s]||'')+`
+    <div style="display:flex;gap:10px;justify-content:space-between;margin-top:20px;">
+      ${s>1?`<button class="btn btn-secondary" onclick="renderObStep(${s-1})">Back</button>`:'<div></div>'}
+      <button class="btn btn-primary" onclick="obNext()">${s<5?'Continue':'Finish'}</button>
+    </div>
+  `;
+  document.querySelectorAll('.ob-dot').forEach((d,i)=>{
+    d.className='ob-dot'+(i+1===s?' active':i+1<s?' done':'');
+  });
+  if(s===5){
+    setTimeout(()=>{
+      const anim=document.getElementById('ob-connect-anim');
+      if(anim) anim.innerHTML='<div class="ob-success">✓</div><div style="color:var(--grn);font-size:15px;font-weight:600;">Connected!</div><div style="color:var(--tm);font-size:12px;margin-top:4px;">Exness #12345678</div>';
+    },1800);
+  }
+}
+function obNext(){
+  if(obStep<5) renderObStep(obStep+1);
+  else{document.getElementById('page-onboarding').style.display='none';const app=document.getElementById('app');app.style.display='flex';applyLayout(app.offsetWidth<720);ro.observe(app);nav('home');showToast('Account connected! Welcome to Ribon7 🚀','success');}
+}
+function selectBroker(el){document.querySelectorAll('.broker-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');}
+function selectTerminal(el){document.querySelectorAll('.terminal-item').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');}
+
+// ── LAYOUT ──
+let isMobile = false;
+function applyLayout(mobile){
+  isMobile = mobile;
+  const app = document.getElementById('app');
+  if(mobile){
+    app.classList.add('mobile-mode');
+    document.getElementById('layout-icon-sidebar').style.display = 'none';
+    document.getElementById('layout-icon-mobile').style.display = 'block';
+  } else {
+    app.classList.remove('mobile-mode');
+    document.getElementById('layout-icon-sidebar').style.display = 'block';
+    document.getElementById('layout-icon-mobile').style.display = 'none';
+  }
+  // GAP 4: Hub stat strip — 3 cols on narrow, 6 on wide
+  const strip = document.getElementById('hub-stat-strip');
+  if(strip) strip.style.gridTemplateColumns = mobile ? 'repeat(3,1fr)' : 'repeat(6,1fr)';
+  setTimeout(checkHistoryOverflow, 80);
+}
+function toggleLayout(){
+  applyLayout(!isMobile);
+}
+// Auto-detect on resize
+const ro = new ResizeObserver(entries=>{
+  for(const e of entries){
+    applyLayout(e.contentRect.width < 720);
+  }
+});
+
+// ── CALENDAR EXPORT ──
+function toggleCalExport(){
+  const m=document.getElementById('cal-export-menu');
+  m.style.display=m.style.display==='none'?'block':'none';
+}
+function shareCalAsImage(){
+  document.getElementById('cal-export-menu').style.display='none';
+  showToast('Capturing calendar image...','info');
+  // In production: html2canvas(document.getElementById('cal-grid'), {backgroundColor:'#080810'})
+  //   .then(canvas=>{ const a=document.createElement('a');a.download='ribon7-calendar.png';a.href=canvas.toDataURL();a.click(); })
+  setTimeout(()=>showToast('Calendar saved as ribon7-calendar.png','success'),1200);
+}
+function downloadCalPDF(){
+  document.getElementById('cal-export-menu').style.display='none';
+  showToast('Generating calendar PDF...','info');
+  setTimeout(()=>showToast('PDF downloaded','success'),1000);
+}
+document.addEventListener('click',e=>{
+  const menu=document.getElementById('cal-export-menu');
+  const btn=document.getElementById('cal-export-btn');
+  if(menu&&btn&&!menu.contains(e.target)&&!btn.contains(e.target)){
+    menu.style.display='none';
+  }
+});
+
+// ── CONNECTION BANNER (GAP 8) ──
+let wsConnectionStatus='connected';
+function setConnectionStatus(status){
+  wsConnectionStatus=status;
+  const banner=document.getElementById('connection-banner');
+  if(!banner)return;
+  if(status==='disconnected'){
+    banner.style.display='flex';
+    banner.innerHTML='<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="var(--amb)" stroke-width="1.3"/><path d="M7 4v4M7 10h.01" stroke="var(--amb)" stroke-width="1.3" stroke-linecap="round"/></svg><span style="font-size:12px;color:var(--amb);flex:1;">MT5 connection lost — reconnecting...</span><button onclick="setConnectionStatus(\'connected\')" style="background:transparent;border:none;color:var(--tm);cursor:pointer;font-size:11px;padding:0 4px;">Dismiss</button>';
+  } else if(status==='reconnecting'){
+    banner.style.display='flex';
+    banner.innerHTML='<div style="width:10px;height:10px;border:1.5px solid var(--amb);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;flex-shrink:0"></div><span style="font-size:12px;color:var(--amb);flex:1;">Reconnecting to MT5...</span>';
+  } else {
+    banner.style.display='none';
+  }
+}
+
+// ── ANALYTICS COLOR RESOLUTION (GAP 12) ──
+function resolveColor(varName){
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+}
+
+// ── MORE DRAWER (mobile) ──
+const morePages = new Set(['analytics','calendar','alerts','profile','settings','symbol']);
+function toggleMoreDrawer(){
+  const drawer = document.getElementById('more-drawer');
+  const overlay = document.getElementById('more-drawer-overlay');
+  const open = drawer.style.display !== 'none';
+  if(open){ closeMoreDrawer(); } else {
+    drawer.style.display = 'block';
+    overlay.style.display = 'block';
+    document.getElementById('bn-more').classList.add('active');
+  }
+}
+function closeMoreDrawer(){
+  document.getElementById('more-drawer').style.display = 'none';
+  document.getElementById('more-drawer-overlay').style.display = 'none';
+  // keep More tab active if we're on a secondary page
+  if(!morePages.has(currentPage)){
+    document.getElementById('bn-more').classList.remove('active');
+  }
+}
+
+// ── KEYBOARD ──
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){hideNewOrder();hideAlertModal();hide2FAModal();hideSearchOverlay();hideCmdPalette();}
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();showCmdPalette();}
+});
+
+// ── INIT ──
+// Show login on load, already done via CSS classes
+</script>
+</body>
+</html>
