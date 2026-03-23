@@ -68,15 +68,35 @@ function AddAccountModal({ onClose, onAdded }) {
         login: parseInt(creds.login),
         account_name: `${broker} - ${creds.login}`
       })
-      const status = await getAccountStatus(acc.id)
-      setTestResult(status?.connected ? 'success' : 'fail')
-      if (status?.connected) { onAdded(); onClose() }
+      
+      // Poll status like onboarding does
+      let attempts = 0
+      const poll = setInterval(async () => {
+        attempts++
+        try {
+          const s = await getAccountStatus(acc.id)
+          if (s.is_active) {
+            clearInterval(poll)
+            setTestResult('success')
+            setTesting(false)
+            onAdded()
+            onClose()
+          }
+        } catch {}
+        if (attempts >= 10) { 
+          clearInterval(poll)
+          setTestResult('fail')
+          setTesting(false)
+          addNotif({ type: 'error', title: 'Connection failed', message: 'Connection timed out' })
+        }
+      }, 2000)
+      
     } catch (e) {
       setTestResult('fail')
+      setTesting(false)
       const errorMessage = e.response?.data?.detail || 'Connection failed'
       addNotif({ type: 'error', title: 'Connection failed', message: errorMessage })
     }
-    setTesting(false)
   }
 
   return (
