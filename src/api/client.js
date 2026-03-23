@@ -6,6 +6,10 @@ const client = axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL })
 client.interceptors.request.use((config) => {
   const { accessToken } = JSON.parse(localStorage.getItem('ribon7-auth') || '{}')?.state || {}
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`
+  
+  // Add ngrok warning bypass header
+  config.headers['ngrok-skip-browser-warning'] = 'true'
+  
   return config
 })
 
