@@ -112,7 +112,11 @@ function SearchOverlay({ open, onClose, accountId, watchlist }) {
 
   const { data: results = [], isFetching } = useQuery({
     queryKey: ['symbol-search', debouncedQ, accountId],
-    queryFn: () => searchSymbols(debouncedQ, accountId),
+    queryFn: async () => {
+      const data = await searchSymbols(debouncedQ, accountId)
+      // Ensure data is always an array
+      return Array.isArray(data) ? data : []
+    },
     enabled: !!debouncedQ && debouncedQ.length >= 1 && !!accountId,
   })
 
@@ -196,7 +200,11 @@ export default function Home() {
 
   const { data: watchlist = [], isLoading } = useQuery({
     queryKey: ['watchlist', account?.id],
-    queryFn: () => getWatchlist(account.id),
+    queryFn: async () => {
+      const data = await getWatchlist(account.id)
+      // Ensure data is always an array
+      return Array.isArray(data) ? data : []
+    },
     enabled: !!account?.id,
   })
 
