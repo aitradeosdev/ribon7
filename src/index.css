@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Color tokens - full names and aliases */
+  --color-bg: #080810;
+  --bg: var(--color-bg);
+  --color-surface-1: #0E0E1A;
+  --s1: var(--color-surface-1);
+  --color-surface-2: #141428;
+  --s2: var(--color-surface-2);
+  --color-surface-3: #1A1A35;
+  --s3: var(--color-surface-3);
+  --color-border: #1E1E3F;
+  --bd: var(--color-border);
+  --color-border-hi: #2D2D5E;
+  --bdh: var(--color-border-hi);
+  --color-accent: #818CF8;
+  --acc: var(--color-accent);
+  --color-accent-dim: #4F46E5;
+  --acd: var(--color-accent-dim);
+  --color-profit: #34D399;
+  --grn: var(--color-profit);
+  --color-loss: #F87171;
+  --red: var(--color-loss);
+  --color-warn: #FBBF24;
+  --amb: var(--color-warn);
+  --color-live: #22D3EE;
+  --cyn: var(--color-live);
+  --color-text-pri: #F1F5F9;
+  --tp: var(--color-text-pri);
+  --color-text-sec: #94A3B8;
+  --ts: var(--color-text-sec);
+  --color-text-muted: #475569;
+  --tm: var(--color-text-muted);
+  
+  /* Font families */
+  --sans: 'DM Sans', sans-serif;
+  --mono: 'Geist Mono', monospace;
+}
+
+.dark {
+  /* Dark mode overrides - same dual definitions */
+  --color-bg: #080810;
+  --bg: var(--color-bg);
+  --color-surface-1: #0E0E1A;
+  --s1: var(--color-surface-1);
+  --color-surface-2: #141428;
+  --s2: var(--color-surface-2);
+  --color-surface-3: #1A1A35;
+  --s3: var(--color-surface-3);
+  --color-border: #1E1E3F;
+  --bd: var(--color-border);
+  --color-border-hi: #2D2D5E;
+  --bdh: var(--color-border-hi);
+  --color-accent: #818CF8;
+  --acc: var(--color-accent);
+  --color-accent-dim: #4F46E5;
+  --acd: var(--color-accent-dim);
+  --color-profit: #34D399;
+  --grn: var(--color-profit);
+  --color-loss: #F87171;
+  --red: var(--color-loss);
+  --color-warn: #FBBF24;
+  --amb: var(--color-warn);
+  --color-live: #22D3EE;
+  --cyn: var(--color-live);
+  --color-text-pri: #F1F5F9;
+  --tp: var(--color-text-pri);
+  --color-text-sec: #94A3B8;
+  --ts: var(--color-text-sec);
+  --color-text-muted: #475569;
+  --tm: var(--color-text-muted);
+}
+
+body {
+  font-family: var(--sans);
+  background-color: var(--color-bg);
+  color: var(--color-text-pri);
+}
