@@ -32,21 +32,36 @@ export default function Onboarding() {
   const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
-    if (step === 2) getBrokers().then(setBrokers).catch(() => {})
+    if (step === 2) {
+      getBrokers()
+        .then((data) => {
+          // Ensure data is an array
+          setBrokers(Array.isArray(data) ? data : [])
+        })
+        .catch(() => {
+          setBrokers([])
+        })
+    }
   }, [step])
 
   useEffect(() => {
     if (step === 3 && selectedBroker) {
-      getBrokerTerminals(selectedBroker).then((terminalList) => {
-        setTerminals(terminalList)
-        // Clear selection if previously selected terminal is no longer available
-        if (selectedTerminal) {
-          const selected = terminalList.find(t => t.path === selectedTerminal)
-          if (!selected || selected.status !== 'available') {
-            setSelectedTerminal('')
+      getBrokerTerminals(selectedBroker)
+        .then((terminalList) => {
+          // Ensure terminalList is an array
+          const terminals = Array.isArray(terminalList) ? terminalList : []
+          setTerminals(terminals)
+          // Clear selection if previously selected terminal is no longer available
+          if (selectedTerminal) {
+            const selected = terminals.find(t => t.path === selectedTerminal)
+            if (!selected || selected.status !== 'available') {
+              setSelectedTerminal('')
+            }
           }
-        }
-      }).catch(() => {})
+        })
+        .catch(() => {
+          setTerminals([])
+        })
     }
   }, [step, selectedBroker, selectedTerminal])
 
