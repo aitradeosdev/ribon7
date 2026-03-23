@@ -61,13 +61,20 @@ function AddAccountModal({ onClose, onAdded }) {
     setTesting(true)
     setTestResult(null)
     try {
-      const acc = await createAccount({ broker, terminal_id: terminalId, ...creds, login: parseInt(creds.login) })
+      const acc = await createAccount({ 
+        broker, 
+        terminal_id: terminalId, 
+        ...creds, 
+        login: parseInt(creds.login),
+        account_name: `${broker} - ${creds.login}`
+      })
       const status = await getAccountStatus(acc.id)
       setTestResult(status?.connected ? 'success' : 'fail')
       if (status?.connected) { onAdded(); onClose() }
     } catch (e) {
       setTestResult('fail')
-      addNotif({ type: 'error', title: 'Connection failed', message: e.response?.data?.detail })
+      const errorMessage = e.response?.data?.detail || 'Connection failed'
+      addNotif({ type: 'error', title: 'Connection failed', message: errorMessage })
     }
     setTesting(false)
   }
@@ -121,14 +128,31 @@ function AddAccountModal({ onClose, onAdded }) {
             <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
               {terminals.length === 0
                 ? <p className="text-xs text-[var(--color-text-muted)]">No terminals found for {broker}.</p>
-                : terminals.map((t) => (
-                  <button key={t.path} onClick={() => setTerminalId(t.path)}
-                    className="text-left px-3 py-2 rounded-lg text-xs transition-colors"
-                    style={{ background: terminalId === t.path ? 'var(--color-accent)' : 'var(--color-surface-2)', color: terminalId === t.path ? '#fff' : 'var(--color-text-pri)' }}>
-                    {t.path}
-                    {t.status === 'unavailable' && <span className="ml-2 text-[var(--color-text-muted)]">(unavailable)</span>}
-                  </button>
-                ))
+                : terminals.map((t) => {
+                    const isAvailable = t.status === 'available'
+                    return (
+                      <button 
+                        key={t.path} 
+                        onClick={() => isAvailable && setTerminalId(t.path)}
+                        disabled={!isAvailable}
+                        className={`text-left px-3 py-2 rounded-lg text-xs transition-colors ${
+                          !isAvailable 
+                            ? 'opacity-50 cursor-not-allowed bg-[var(--color-surface-3)]' 
+                            : terminalId === t.path 
+                              ? 'bg-[var(--color-accent)] text-white' 
+                              : 'bg-[var(--color-surface-2)] text-[var(--color-text-pri)] hover:bg-[var(--color-surface-3)]'
+                        }`}>
+                        <div className="flex items-center justify-between">
+                          <span>{t.path}</span>
+                          <span className={`text-[10px] capitalize ${
+                            t.status === 'available' ? 'text-[var(--color-profit)]' : 'text-[var(--color-loss)]'
+                          }`}>
+                            {t.status === 'available' ? 'Available' : t.status === 'in_use' ? 'In use' : 'Unavailable'}
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })
               }
             </div>
             <div className="flex gap-2">
