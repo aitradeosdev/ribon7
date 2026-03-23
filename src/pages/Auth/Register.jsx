@@ -49,7 +49,11 @@ export default function Register() {
             <Input label="Email" type="email" placeholder="you@example.com" error={errors.email?.message}
               {...register('email', { required: 'Required' })} />
             <Input label="Password" type="password" placeholder="Min 8 characters" error={errors.password?.message}
-              {...register('password', { required: 'Required', minLength: { value: 8, message: 'Min 8 characters' } })} />
+              {...register('password', { 
+                required: 'Required', 
+                minLength: { value: 8, message: 'Min 8 characters' },
+                maxLength: { value: 72, message: 'Max 72 characters' }
+              })} />
             <Input label="Confirm password" type="password" placeholder="Repeat password" error={errors.confirm?.message}
               {...register('confirm', { validate: (v) => v === password || 'Passwords do not match' })} />
 
