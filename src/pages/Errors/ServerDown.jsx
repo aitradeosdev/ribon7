@@ -13,7 +13,7 @@ export default function ServerDown() {
 
   const checkConnection = async () => {
     try {
-      await fetch(import.meta.env.VITE_API_BASE_URL + '/api/v1/health', { 
+      await fetch(import.meta.env.VITE_API_BASE_URL + '/health', { 
         method: 'GET',
         headers: { 'ngrok-skip-browser-warning': 'true' },
         timeout: 5000 

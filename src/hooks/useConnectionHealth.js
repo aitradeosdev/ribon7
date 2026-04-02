@@ -9,7 +9,7 @@ export function useConnectionHealth() {
 
   const checkHealth = async () => {
     try {
-      await client.get('/api/v1/health', { timeout: 5000 })
+      await client.get('/health', { timeout: 5000 })
       if (serverDown) {
         setServerDown(false)
         console.log('✅ Backend connection restored')
