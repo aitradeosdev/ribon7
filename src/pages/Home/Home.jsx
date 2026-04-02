@@ -206,6 +206,7 @@ export default function Home() {
       console.log('🔍 Fetching watchlist for account:', account.id)
       const data = await getWatchlist(account.id)
       console.log('📊 Watchlist response:', data)
+      console.log('📊 First item structure:', data[0])
       // Ensure data is always an array
       return Array.isArray(data) ? data : []
     },
