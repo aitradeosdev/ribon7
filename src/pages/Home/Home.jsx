@@ -199,16 +199,20 @@ export default function Home() {
   const [expandedSymbol, setExpandedSymbol] = useState(null)
   const [searchOpen, setSearchOpen] = useState(false)
 
-  const { data: watchlist = [], isLoading } = useQuery({
+  const { data: watchlist = [], isLoading, error } = useQuery({
     queryKey: ['watchlist', account?.id],
     queryFn: async () => {
       if (!account?.id) return []
+      console.log('🔍 Fetching watchlist for account:', account.id)
       const data = await getWatchlist(account.id)
+      console.log('📊 Watchlist response:', data)
       // Ensure data is always an array
       return Array.isArray(data) ? data : []
     },
     enabled: !!account?.id,
   })
+
+  console.log('🏠 Home page state:', { account: account?.id, isLoading, watchlistLength: watchlist?.length, error })
 
   const handleRemove = async (id) => {
     await removeFromWatchlist(id).catch(() => {})
@@ -232,6 +236,16 @@ export default function Home() {
             <Plus size={13} /> Add Symbol
           </Button>
         </div>
+
+        {/* Debug info */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mb-4 p-3 bg-[var(--color-surface-2)] rounded-lg text-xs">
+            <div>Account: {account?.id || 'null'}</div>
+            <div>Loading: {isLoading.toString()}</div>
+            <div>Watchlist length: {watchlist?.length || 0}</div>
+            <div>Error: {error?.message || 'none'}</div>
+          </div>
+        )}
 
         {/* List */}
         {isLoading && (
