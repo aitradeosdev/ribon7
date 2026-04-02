@@ -4,7 +4,6 @@ import { useEffect, useState, Component } from 'react'
 import { useAuthStore } from './store/authStore'
 import { useAccountStore } from './store/accountStore'
 import { useServerStore } from './store/serverStore'
-import { useConnectionHealth } from './hooks/useConnectionHealth'
 import { getAccounts } from './api/accounts'
 import AppShell from './components/layout/AppShell'
 
@@ -80,12 +79,6 @@ function OfflineGate({ children }) {
   }, [])
   if (!online) return <Offline />
   return children
-}
-
-// ── Connection Health Monitor ────────────────────────────────────────────────
-function ConnectionMonitor() {
-  useConnectionHealth()
-  return null
 }
 
 // ── Server-down gate ──────────────────────────────────────────────────────────
@@ -164,7 +157,6 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <ConnectionMonitor />
         <OfflineGate>
           <ServerGate>
             <BrowserRouter>
