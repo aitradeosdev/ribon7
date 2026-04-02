@@ -268,6 +268,11 @@ export default function Home() {
 
         {!isLoading && watchlist.length > 0 && (
           <div className="flex flex-col gap-2">
+            {/* Temporary: Show raw data */}
+            <div className="p-3 bg-[var(--color-surface-2)] rounded-lg text-xs">
+              <pre>{JSON.stringify(watchlist, null, 2)}</pre>
+            </div>
+            
             {watchlist.map((item) => (
               <WatchlistCard
                 key={item.id}
