@@ -98,14 +98,35 @@ function ServerGate({ children }) {
 function ProtectedRoute({ children }) {
   const token = useAuthStore((s) => s.accessToken)
   const { activeAccount, setActiveAccount } = useAccountStore()
+  const [accountLoading, setAccountLoading] = useState(false)
 
   useEffect(() => {
-    if (token && !activeAccount) {
-      getAccounts().then((accs) => { if (accs.length) setActiveAccount(accs[0]) }).catch(() => {})
+    if (token && !activeAccount && !accountLoading) {
+      setAccountLoading(true)
+      getAccounts()
+        .then((accs) => { 
+          if (accs.length) setActiveAccount(accs[0]) 
+        })
+        .catch(() => {})
+        .finally(() => setAccountLoading(false))
     }
-  }, [token])
+  }, [token, activeAccount, accountLoading])
 
   if (!token) return <Navigate to="/login" replace />
+  
+  // Show loading while fetching account
+  if (token && !activeAccount && accountLoading) {
+    return (
+      <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 13, letterSpacing: '0.2em', color: 'var(--color-accent)', fontWeight: 600 }}>RIBON7</span>
+          <div style={{ width: 20, height: 20, border: '2px solid var(--color-border)', borderTop: '2px solid var(--color-accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>Loading account...</span>
+        </div>
+      </div>
+    )
+  }
+  
   return children
 }
 
@@ -136,14 +157,6 @@ function ShellRoute({ children }) {
 
 function RootRedirect() {
   const token = useAuthStore((s) => s.accessToken)
-  const { activeAccount, setActiveAccount } = useAccountStore()
-
-  useEffect(() => {
-    if (token && !activeAccount) {
-      getAccounts().then((accs) => { if (accs.length) setActiveAccount(accs[0]) }).catch(() => {})
-    }
-  }, [token])
-
   return <Navigate to={token ? '/home' : '/login'} replace />
 }
 
@@ -179,6 +192,12 @@ export default function App() {
           </ServerGate>
         </OfflineGate>
       </ErrorBoundary>
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </QueryClientProvider>
   )
 }
