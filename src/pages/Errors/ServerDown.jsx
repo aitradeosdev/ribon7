@@ -1,22 +1,40 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Server } from 'lucide-react'
+import { Server, RefreshCw } from 'lucide-react'
 import { useServerStore } from '../../store/serverStore'
+import Button from '../../components/ui/Button'
 
-const RETRY_INTERVAL = 30
+const RETRY_INTERVAL = 15
 
 export default function ServerDown() {
   const setServerDown = useServerStore((s) => s.setServerDown)
   const [countdown, setCountdown] = useState(RETRY_INTERVAL)
+  const [retrying, setRetrying] = useState(false)
+
+  const checkConnection = async () => {
+    try {
+      await fetch(import.meta.env.VITE_API_BASE_URL + '/api/v1/health', { 
+        method: 'GET',
+        headers: { 'ngrok-skip-browser-warning': 'true' },
+        timeout: 5000 
+      })
+      setServerDown(false)
+    } catch {
+      // Still down
+    }
+  }
+
+  const handleManualRetry = async () => {
+    setRetrying(true)
+    await checkConnection()
+    setRetrying(false)
+  }
 
   useEffect(() => {
     const tick = setInterval(() => {
       setCountdown((c) => {
         if (c <= 1) {
-          // Probe the health endpoint
-          fetch(import.meta.env.VITE_API_BASE_URL + '/health')
-            .then(() => setServerDown(false))
-            .catch(() => {})
+          checkConnection()
           return RETRY_INTERVAL
         }
         return c - 1
@@ -37,6 +55,18 @@ export default function ServerDown() {
         <span style={{ fontSize: 12, color: 'var(--color-text-muted)', fontFamily: 'var(--mono)' }}>
           Next retry in {countdown}s
         </span>
+        <Button 
+          onClick={handleManualRetry} 
+          disabled={retrying}
+          size="sm"
+          style={{ marginTop: 8 }}
+        >
+          {retrying ? (
+            <><RefreshCw size={12} className="animate-spin" /> Retrying…</>
+          ) : (
+            <><RefreshCw size={12} /> Retry Now</>
+          )}
+        </Button>
       </motion.div>
     </div>
   )

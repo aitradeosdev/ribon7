@@ -4,6 +4,7 @@ import { useEffect, useState, Component } from 'react'
 import { useAuthStore } from './store/authStore'
 import { useAccountStore } from './store/accountStore'
 import { useServerStore } from './store/serverStore'
+import { useConnectionHealth } from './hooks/useConnectionHealth'
 import { getAccounts } from './api/accounts'
 import AppShell from './components/layout/AppShell'
 
@@ -26,7 +27,22 @@ import NotFound from './pages/Errors/NotFound'
 import Offline from './pages/Errors/Offline'
 import ServerDown from './pages/Errors/ServerDown'
 
-const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30000 } } })
+const queryClient = new QueryClient({ 
+  defaultOptions: { 
+    queries: { 
+      retry: (failureCount, error) => {
+        // Don't retry on 4xx errors (client errors)
+        if (error?.response?.status >= 400 && error?.response?.status < 500) return false
+        // Retry up to 3 times for network/server errors
+        return failureCount < 3
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 30000,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true
+    } 
+  } 
+})
 
 // ── Error Boundary ────────────────────────────────────────────────────────────
 class ErrorBoundary extends Component {
@@ -64,6 +80,12 @@ function OfflineGate({ children }) {
   }, [])
   if (!online) return <Offline />
   return children
+}
+
+// ── Connection Health Monitor ────────────────────────────────────────────────
+function ConnectionMonitor() {
+  useConnectionHealth()
+  return null
 }
 
 // ── Server-down gate ──────────────────────────────────────────────────────────
@@ -129,6 +151,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
+        <ConnectionMonitor />
         <OfflineGate>
           <ServerGate>
             <BrowserRouter>
